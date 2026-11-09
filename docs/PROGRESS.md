@@ -1425,3 +1425,242 @@ Decisions and open questions:
 
 Next stage:
 Stage 9: JSON and Markdown reports from the CLI, then a small FastAPI plus React dashboard. Waiting for "next".
+
+## Stage 9: reports and dashboard (commit d952dc772f0b2dd4b3981f65af96ca061655d2f3)
+What was built:
+`auditor audit <path>` still refuses a path outside `sample_tasks` and still prints the sandbox warning. After a task loads, it runs checks 1 to 11 and writes `<id>.json` and `<id>.md`. Each report has the findings, the requirement coverage, and the mutation score. A finding keeps its check, severity, location, and explanation. Check 11 is measured once, and its survivors are the findings. The check decisions were not changed.
+
+A FastAPI app stores those reports in SQLite. A React, Vite, and TypeScript page with plain CSS lists the stored sample tasks and their findings. An empty database shows "No tasks stored." The database file is gitignored.
+
+`slugify` has no findings, coverage 1.000, and mutation score 1.000. `plant_weak_assertion_1` reports `weak_assertion` in both files. Its mutation score is 0.000 because that task has no mutation sites; a total of 0 already scores 0.0.
+
+Commands run and their real output:
+```
+.venv/bin/auditor audit sample_tasks/slugify --out /var/folders/21/j5wt2p656js0x60r7_mql1p00000gn/T/tmp.ASWK6J03wU
+warning: later stages run task code and this is not a security sandbox
+id: slugify
+title: Turn a phrase into a URL slug
+requirements: 2
+requirement_coverage: 1.000
+mutation_score: 1.000
+findings: 0
+json: /var/folders/21/j5wt2p656js0x60r7_mql1p00000gn/T/tmp.ASWK6J03wU/slugify.json
+markdown: /var/folders/21/j5wt2p656js0x60r7_mql1p00000gn/T/tmp.ASWK6J03wU/slugify.md
+
+slugify.json
+{
+  "id": "slugify",
+  "title": "Turn a phrase into a URL slug",
+  "requirements": 2,
+  "requirement_coverage": 1.0,
+  "mutation_score": 1.0,
+  "findings": []
+}
+
+slugify.md
+# slugify
+
+title: Turn a phrase into a URL slug
+requirements: 2
+requirement_coverage: 1.000
+mutation_score: 1.000
+
+## Findings
+
+No findings.
+
+.venv/bin/auditor audit sample_tasks/plant_weak_assertion_1 --out /var/folders/21/j5wt2p656js0x60r7_mql1p00000gn/T/tmp.ASWK6J03wU
+warning: later stages run task code and this is not a security sandbox
+id: plant_weak_assertion_1
+title: Read a box label with a weak test
+requirements: 1
+requirement_coverage: 1.000
+mutation_score: 0.000
+findings: 1
+
+plant_weak_assertion_1.json findings:
+{
+  "check": "weak_assertion",
+  "severity": "medium",
+  "location": "tests/test_box.py:6",
+  "explanation": "test_label does not contain an assert."
+}
+
+plant_weak_assertion_1.md
+- check: weak_assertion
+  severity: medium
+  location: tests/test_box.py:6
+  explanation: test_label does not contain an assert.
+
+.venv/bin/auditor audit /tmp
+warning: later stages run task code and this is not a security sandbox
+error: path: must be inside sample_tasks (value: '/private/tmp')
+exit 1
+
+.venv/bin/ruff check .
+All checks passed!
+
+.venv/bin/ruff format --check .
+312 files already formatted
+
+.venv/bin/mypy
+Success: no issues found in 41 source files
+
+.venv/bin/pytest -v
+============================= test session starts ==============================
+platform darwin -- Python 3.11.14, pytest-9.2.0, pluggy-1.7.0 -- /Users/shubhambaviskar/Desktop/Eval Task Auditor/.venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /Users/shubhambaviskar/Desktop/Eval Task Auditor
+configfile: pyproject.toml
+testpaths: tests
+plugins: anyio-4.16.0
+collecting ... collected 111 items
+
+tests/test_api.py::test_empty_database_lists_nothing PASSED              [  0%]
+tests/test_api.py::test_stored_report_keeps_finding_fields PASSED        [  1%]
+tests/test_brittle_format.py::test_cutoff_is_40_characters PASSED        [  2%]
+tests/test_brittle_format.py::test_long_string_equality_without_a_specified_format_is_flagged PASSED [  3%]
+tests/test_brittle_format.py::test_numeric_equality_is_not_flagged PASSED [  4%]
+tests/test_brittle_format.py::test_same_literal_is_not_flagged_when_the_instruction_specifies_it PASSED [  5%]
+tests/test_brittle_format.py::test_short_string_equality_is_not_flagged PASSED [  6%]
+tests/test_check_quality.py::test_zero_denominator_is_below_the_bar PASSED [  7%]
+tests/test_check_quality.py::test_check_quality_meets_the_bar PASSED     [  8%]
+tests/test_cli.py::test_audit_prints_id_title_count_and_sandbox_warning PASSED [  9%]
+tests/test_cli.py::test_audit_prints_validation_error_and_exits_nonzero PASSED [  9%]
+tests/test_cli.py::test_audit_refuses_a_path_outside_sample_tasks PASSED [ 10%]
+tests/test_cli.py::test_audit_writes_the_planted_finding_in_both_reports PASSED [ 11%]
+tests/test_coverage.py::test_coverage_checks_are_registered PASSED       [ 12%]
+tests/test_coverage.py::test_untested_requirement_names_the_missing_id PASSED [ 13%]
+tests/test_coverage.py::test_covered_requirements_are_not_flagged_as_untested PASSED [ 14%]
+tests/test_coverage.py::test_two_decorators_on_one_test_cover_both_ids PASSED [ 15%]
+tests/test_coverage.py::test_alias_of_covers_is_not_recognized PASSED    [ 16%]
+tests/test_coverage.py::test_test_without_covers_is_hidden PASSED        [ 17%]
+tests/test_coverage.py::test_unknown_covers_id_is_hidden PASSED          [ 18%]
+tests/test_coverage.py::test_ordinary_equality_is_not_a_hidden_error PASSED [ 18%]
+tests/test_coverage.py::test_pytest_raises_match_absent_from_the_instruction_is_flagged PASSED [ 19%]
+tests/test_coverage.py::test_same_error_message_is_not_flagged_when_the_instruction_contains_it PASSED [ 20%]
+tests/test_coverage.py::test_exception_string_equality_absent_from_the_instruction_is_flagged PASSED [ 21%]
+tests/test_coverage.py::test_coverage_is_zero_one_and_two_of_two PASSED  [ 22%]
+tests/test_coverage.py::test_zero_requirements_uses_zero PASSED          [ 23%]
+tests/test_coverage.py::test_slugify_sample_covers_both_requirements PASSED [ 24%]
+tests/test_coverage.py::test_static_runner_does_not_run_coverage_checks PASSED [ 25%]
+tests/test_coverage.py::test_coverage_module_does_not_import_or_run_tests PASSED [ 26%]
+tests/test_dynamic.py::test_dynamic_checks_are_registered PASSED         [ 27%]
+tests/test_dynamic.py::test_slugify_imports_the_reference_solution PASSED [ 27%]
+tests/test_dynamic.py::test_slugify_has_no_dynamic_findings PASSED       [ 28%]
+tests/test_dynamic.py::test_wrong_solution_is_flagged_and_a_consistent_failure_is_not_flaky PASSED [ 29%]
+tests/test_dynamic.py::test_first_argument_cheat_passes_and_the_others_do_not PASSED [ 30%]
+tests/test_dynamic.py::test_counter_file_forces_a_flaky_result PASSED    [ 31%]
+tests/test_dynamic.py::test_hanging_child_returns_within_the_timeout PASSED [ 32%]
+tests/test_dynamic.py::test_child_cannot_open_a_tcp_socket PASSED        [ 33%]
+tests/test_hardcoded_solution.py::test_literal_return_is_confirmed_on_a_perturbed_input PASSED [ 34%]
+tests/test_hardcoded_solution.py::test_computed_return_is_not_flagged PASSED [ 35%]
+tests/test_hardcoded_solution.py::test_if_chain_on_literals_is_flagged_when_perturbation_changes PASSED [ 36%]
+tests/test_hardcoded_solution.py::test_literal_return_with_no_arguments_is_flagged PASSED [ 36%]
+tests/test_hardcoded_solution.py::test_subprocess_timeout_does_not_flag PASSED [ 37%]
+tests/test_labeled_tasks.py::test_good_tasks_have_empty_labels_and_one_module PASSED [ 38%]
+tests/test_labeled_tasks.py::test_flawed_tasks_cover_each_check_three_times PASSED [ 39%]
+tests/test_labeled_tasks.py::test_loader_and_checks_do_not_read_expected_findings PASSED [ 40%]
+tests/test_loader.py::test_valid_folder_loads_id_title_and_requirement_count PASSED [ 41%]
+tests/test_loader.py::test_real_sample_task_loads_from_another_working_directory PASSED [ 42%]
+tests/test_loader.py::test_missing_file_or_directory_names_the_path[task.yaml-task.yaml-required file is missing] PASSED [ 43%]
+tests/test_loader.py::test_missing_file_or_directory_names_the_path[instruction.md-instruction.md-required file is missing] PASSED [ 44%]
+tests/test_loader.py::test_missing_file_or_directory_names_the_path[solution/solution.py-solution/solution.py-required file is missing] PASSED [ 45%]
+tests/test_loader.py::test_missing_file_or_directory_names_the_path[environment-environment-required directory is missing] PASSED [ 45%]
+tests/test_loader.py::test_missing_file_or_directory_names_the_path[tests-tests-required directory is missing] PASSED [ 46%]
+tests/test_loader.py::test_environment_file_is_rejected PASSED           [ 47%]
+tests/test_loader.py::test_missing_pytest_file_names_the_pattern PASSED  [ 48%]
+tests/test_loader.py::test_missing_field_names_the_field PASSED          [ 49%]
+tests/test_loader.py::test_wrong_field_type_names_the_value PASSED       [ 50%]
+tests/test_loader.py::test_unknown_field_names_the_value PASSED          [ 51%]
+tests/test_loader.py::test_non_python_language_names_the_value PASSED    [ 52%]
+tests/test_loader.py::test_empty_requirements_names_the_value PASSED     [ 53%]
+tests/test_loader.py::test_duplicate_requirement_id_names_the_later_value PASSED [ 54%]
+tests/test_loader.py::test_task_id_must_match_folder_name PASSED         [ 54%]
+tests/test_loader.py::test_path_outside_sample_tasks_names_the_path PASSED [ 55%]
+tests/test_loader.py::test_symlink_that_escapes_sample_tasks_is_refused PASSED [ 56%]
+tests/test_loader.py::test_nested_path_inside_sample_tasks_is_refused PASSED [ 57%]
+tests/test_loader.py::test_task_yaml_must_be_a_mapping PASSED            [ 58%]
+tests/test_loader.py::test_invalid_yaml_names_the_parser_error PASSED    [ 59%]
+tests/test_mutation.py::test_mutation_checks_stay_outside_checks_8_to_10 PASSED [ 60%]
+tests/test_mutation.py::test_operator_map_and_bools_and_branches PASSED  [ 61%]
+tests/test_mutation.py::test_each_comparison_flips_once PASSED           [ 62%]
+tests/test_mutation.py::test_float_and_negative_constants_move_by_one PASSED [ 63%]
+tests/test_mutation.py::test_if_expression_deletes_one_side PASSED       [ 63%]
+tests/test_mutation.py::test_cap_and_seed_keep_the_same_subset PASSED    [ 64%]
+tests/test_mutation.py::test_unparseable_text_is_excluded PASSED         [ 65%]
+tests/test_mutation.py::test_render_rejects_a_tree_that_does_not_parse PASSED [ 66%]
+tests/test_mutation.py::test_score_is_zero_when_there_are_no_mutants PASSED [ 67%]
+tests/test_mutation.py::test_auditor_does_not_import_or_exec_the_solution PASSED [ 68%]
+tests/test_mutation.py::test_slugify_mutation_score_is_stable_and_files_stay PASSED [ 69%]
+tests/test_mutation.py::test_positive_tests_kill_every_mutant PASSED     [ 70%]
+tests/test_mutation.py::test_weak_countdown_leaves_a_survivor_and_kills_a_timeout PASSED [ 71%]
+tests/test_nondeterministic.py::test_nondeterministic_uses_are_flagged[import random\n\ndef test_roll() -> None:\n    assert random.random() >= 0\n-random.random] PASSED [ 72%]
+tests/test_nondeterministic.py::test_nondeterministic_uses_are_flagged[import random\n\ndef test_imports_random() -> None:\n    assert True\n-imports random] PASSED [ 72%]
+tests/test_nondeterministic.py::test_nondeterministic_uses_are_flagged[import time\n\ndef test_wait() -> None:\n    time.sleep(0)\n    assert True\n-time.sleep] PASSED [ 73%]
+tests/test_nondeterministic.py::test_nondeterministic_uses_are_flagged[import time\n\ndef test_clock() -> None:\n    assert time.time() > 0\n-time.time] PASSED [ 74%]
+tests/test_nondeterministic.py::test_nondeterministic_uses_are_flagged[import datetime\n\ndef test_year() -> None:\n    assert datetime.datetime.now().year > 2000\n-datetime.datetime.now] PASSED [ 75%]
+tests/test_nondeterministic.py::test_nondeterministic_uses_are_flagged[import requests\n\ndef test_marker() -> None:\n    assert True\n-requests] PASSED [ 76%]
+tests/test_nondeterministic.py::test_nondeterministic_uses_are_flagged[import socket\n\ndef test_open_socket() -> None:\n    assert socket.socket() is not None\n-socket] PASSED [ 77%]
+tests/test_nondeterministic.py::test_nondeterministic_uses_are_flagged[import asyncio\n\ndef test_pause() -> None:\n    asyncio.sleep(0)\n-asyncio.sleep] PASSED [ 78%]
+tests/test_nondeterministic.py::test_seeded_or_deterministic_code_is_not_flagged[def test_add() -> None:\n    assert 1 + 1 == 2\n] PASSED [ 79%]
+tests/test_nondeterministic.py::test_seeded_or_deterministic_code_is_not_flagged[import random\n\ndef test_roll() -> None:\n    random.seed(1)\n    assert random.random() >= 0\n] PASSED [ 80%]
+tests/test_nondeterministic.py::test_seeded_or_deterministic_code_is_not_flagged[import time\n\ndef test_year() -> None:\n    assert time.strftime("%Y", time.gmtime(0)) == "1970"\n] PASSED [ 81%]
+tests/test_nondeterministic.py::test_random_instance_constructed_with_a_seed_is_not_flagged PASSED [ 81%]
+tests/test_nondeterministic.py::test_later_unseeded_random_replaces_an_earlier_seed PASSED [ 82%]
+tests/test_nondeterministic.py::test_fixture_that_freezes_time_is_not_flagged PASSED [ 83%]
+tests/test_nondeterministic.py::test_unrelated_fixture_does_not_hide_datetime_now PASSED [ 84%]
+tests/test_report.py::test_markdown_lists_each_finding_field_and_both_scores PASSED [ 85%]
+tests/test_report.py::test_markdown_says_when_a_task_has_no_findings PASSED [ 86%]
+tests/test_source_inspection.py::test_open_parse_and_membership_on_the_solution_are_flagged PASSED [ 87%]
+tests/test_source_inspection.py::test_open_of_a_non_solution_path_is_ignored PASSED [ 88%]
+tests/test_source_inspection.py::test_reassigned_path_is_not_treated_as_the_solution PASSED [ 89%]
+tests/test_source_inspection.py::test_aliased_inspect_getsource_is_flagged PASSED [ 90%]
+tests/test_static_checks.py::test_static_checks_are_registered PASSED    [ 90%]
+tests/test_static_checks.py::test_run_static_checks_invokes_the_registry PASSED [ 91%]
+tests/test_static_checks.py::test_slugify_sample_has_no_static_findings PASSED [ 92%]
+tests/test_weak_assertion.py::test_weak_patterns_are_flagged[def test_calls() -> None:\n    build()\n-does not contain an assert] PASSED [ 93%]
+tests/test_weak_assertion.py::test_weak_patterns_are_flagged[def test_always() -> None:\n    assert True\n-assert True] PASSED [ 94%]
+tests/test_weak_assertion.py::test_weak_patterns_are_flagged[def test_present() -> None:\n    assert build() is not None\n-is not None] PASSED [ 95%]
+tests/test_weak_assertion.py::test_weak_patterns_are_flagged[def test_kind() -> None:\n    assert isinstance(build(), int)\n-isinstance] PASSED [ 96%]
+tests/test_weak_assertion.py::test_weak_patterns_are_flagged[def test_swallows() -> None:\n    try:\n        build()\n    except Exception:\n        pass\n-only passes] PASSED [ 97%]
+tests/test_weak_assertion.py::test_real_equality_assert_is_not_flagged PASSED [ 98%]
+tests/test_weak_assertion.py::test_real_assert_beside_assert_true_is_not_flagged PASSED [ 99%]
+tests/test_weak_assertion.py::test_reraise_is_not_flagged PASSED         [100%]
+
+======================== 111 passed in 70.51s (0:01:10) ========================
+
+npx tsc --noEmit
+exit 0, no diagnostics
+
+npx vite build
+vite v6.4.6 building for production...
+transforming...
+✓ 29 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.40 kB │ gzip:  0.27 kB
+dist/assets/index-CqjeQbxl.css    1.52 kB │ gzip:  0.67 kB
+dist/assets/index-CUucqIJ5.js   226.74 kB │ gzip: 70.48 kB
+✓ built in 585ms
+```
+
+The dashboard was opened in the browser. An empty database showed "No tasks stored." After the two reports were stored, the list showed `plant_weak_assertion_1` with 1 finding and `slugify` with no findings. Opening the first showed `weak_assertion`, medium, `tests/test_box.py:6`, and "test_label does not contain an assert." Opening slugify showed coverage 1.000, mutation 1.000, and "No findings."
+
+Bugs found and fixed:
+- `fastapi.testclient` warned that `httpx` is deprecated for that client and asked for `httpx2`. `httpx2` is now a dev dependency. The final pytest run printed no warning.
+- While a selected task was still loading, the detail panel said "Select a task." It now says "Loading findings."
+- Ruff format put the slugify CLI invocation on one line.
+
+Files changed:
+`auditor/cli.py`, `auditor/run.py`, `auditor/report.py`, `auditor/store.py`, `auditor/api.py`, `auditor/checks/__init__.py`, `auditor/checks/model.py`, `tests/test_cli.py`, `tests/test_api.py`, `tests/test_report.py`, `pyproject.toml`, `.gitignore`, `frontend/`.
+
+Decisions and open questions:
+- The check functions were not changed. Two sentences that said the CLI does not run the checks, or does not build a static target, were updated so they match this stage.
+- The old test that locked `auditor audit` as validation-only was replaced. A path outside `sample_tasks`, and a task that fails validation, still stop before the checks run.
+- Reports default to `reports/`, which is gitignored. `--out` chooses another directory. The database defaults to `auditor.sqlite` beside the project, or `AUDITOR_DB`. Neither file is committed.
+- The page lists what is stored. It does not audit every sample task by itself. The click-through used the slugify report and the planted weak-assertion report.
+- `plant_weak_assertion_1` has a mutation score of 0.000 because there are no mutants. That is the existing total-of-zero rule. The finding is still reported.
+
+Next stage:
+Stage 10: README, docs/DESIGN.md, and a GitHub Actions workflow. Waiting for "next".
