@@ -548,3 +548,215 @@ Decisions and open questions:
 
 Next stage:
 Stage 5: mutation testing, check 11, with a fixed seed. Waiting for "next".
+
+## Stage 5: mutation testing, check 11 (commit 0d2f43e451ef318813508b65a28f74819d75de28)
+What was built:
+`surviving_mutants`, registered as `MUTATION_CHECKS`. It mutates only `solution/solution.py`, one change per mutant, and runs each mutant through the Stage 4 runner (`run_suite_source`): temp directory, 2 second timeout, network block, and the same copy rule. The auditor process does not import or exec the solution. `sample_tasks` is not modified. Checks 1 to 10 and their registries are unchanged. `auditor audit` still only validates a task folder.
+
+Operator map, one flip per comparison operator:
+
+```
+==     becomes !=
+!=     becomes ==
+<      becomes >=
+<=     becomes >
+>      becomes <=
+>=     becomes <
+is     becomes is not
+is not becomes is
+in     becomes not in
+not in becomes in
+```
+
+`and` swaps with `or`. A numeric constant `n` becomes `n + 1` and `n - 1`, as two mutants. Floats move by 1.0. True and False are not mutated: a bool is an int in Python, and these are flags, not counts. Complex numbers are not mutated. A minus sign in source is a unary operator on a positive constant, so the constant that moves is that positive number. A `Constant` whose value is already negative is still moved by one.
+
+Delete a branch applies to `if` statements and `if` expressions. Deleting the if branch keeps the else, or `pass` when there is no else. Deleting the else branch drops `elif` and `else`. `while` and `for` are not branches here.
+
+Every site is used when there are at most 48. Above that cap, `random.Random(11)` picks the subset, and the chosen sites stay in source order. slugify has 3 sites, which is under the cap, so nothing was sampled (`sampled False`). A mutant that does not parse is excluded and is not part of the total. slugify excluded 0. A rewrite that unparses to the original source, or to the same text as unparsing the original tree, is dropped and is not counted as excluded.
+
+A mutant is killed when the suite does not pass, including a timeout or an error. A mutant survives when the suite passes. The score is killed / total. A total of 0 scores 0.0. Each survivor names the mutation and the location. The score was measured by running. It was not chosen in advance.
+
+`sample_tasks/slugify`: score 1.0, killed 3, total 3, excluded 0, survivors none. The three mutants are deleting the if branch at line 5, deleting the else branch at line 5, and deleting the if branch at line 8. `False` and `True` in that solution were not mutated.
+
+Invented `is_positive`, which returns `n > 0`, with tests for 1, 0, and -1: score 1.0, killed 3, total 3, excluded 0, survivors none.
+
+Invented `countdown`, `while n > 0: n = n - 1`, with only `assert countdown(2) == 0`: score 0.8, killed 4, total 5, excluded 0. The survivor is `surviving_mutants` [high] at `solution/solution.py:3`: "Mutant survived at solution/solution.py:3 by changing constant 1 to 2." That mutant is `n = n - 2`, and `countdown(2)` still returns 0. The mutant `n = n - 0` does not finish. It was killed: elapsed 2.006 seconds, `timed_out True`, `passed False`. A suite that exceeds 2 seconds counts as killed.
+
+The tests were written by the same author as the checks. Passing them is weak evidence.
+
+Commands run and their real output:
+```
+.venv/bin/ruff check .
+All checks passed!
+
+.venv/bin/ruff format --check .
+42 files already formatted
+
+.venv/bin/mypy
+Success: no issues found in 33 source files
+
+.venv/bin/pytest -v
+============================= test session starts ==============================
+platform darwin -- Python 3.11.14, pytest-9.2.0, pluggy-1.7.0 -- /Users/shubhambaviskar/Desktop/Eval Task Auditor/.venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /Users/shubhambaviskar/Desktop/Eval Task Auditor
+configfile: pyproject.toml
+testpaths: tests
+collecting ... collected 102 items
+
+tests/test_brittle_format.py::test_cutoff_is_40_characters PASSED        [  0%]
+tests/test_brittle_format.py::test_long_string_equality_without_a_specified_format_is_flagged PASSED [  1%]
+tests/test_brittle_format.py::test_numeric_equality_is_not_flagged PASSED [  2%]
+tests/test_brittle_format.py::test_same_literal_is_not_flagged_when_the_instruction_specifies_it PASSED [  3%]
+tests/test_brittle_format.py::test_short_string_equality_is_not_flagged PASSED [  4%]
+tests/test_cli.py::test_audit_prints_id_title_count_and_sandbox_warning PASSED [  5%]
+tests/test_cli.py::test_audit_prints_validation_error_and_exits_nonzero PASSED [  6%]
+tests/test_cli.py::test_audit_refuses_a_path_outside_sample_tasks PASSED [  7%]
+tests/test_cli.py::test_audit_command_stays_validation_only PASSED       [  8%]
+tests/test_coverage.py::test_coverage_checks_are_registered PASSED       [  9%]
+tests/test_coverage.py::test_untested_requirement_names_the_missing_id PASSED [ 10%]
+tests/test_coverage.py::test_covered_requirements_are_not_flagged_as_untested PASSED [ 11%]
+tests/test_coverage.py::test_two_decorators_on_one_test_cover_both_ids PASSED [ 12%]
+tests/test_coverage.py::test_alias_of_covers_is_not_recognized PASSED    [ 13%]
+tests/test_coverage.py::test_test_without_covers_is_hidden PASSED        [ 14%]
+tests/test_coverage.py::test_unknown_covers_id_is_hidden PASSED          [ 15%]
+tests/test_coverage.py::test_ordinary_equality_is_not_a_hidden_error PASSED [ 16%]
+tests/test_coverage.py::test_pytest_raises_match_absent_from_the_instruction_is_flagged PASSED [ 17%]
+tests/test_coverage.py::test_same_error_message_is_not_flagged_when_the_instruction_contains_it PASSED [ 18%]
+tests/test_coverage.py::test_exception_string_equality_absent_from_the_instruction_is_flagged PASSED [ 19%]
+tests/test_coverage.py::test_coverage_is_zero_one_and_two_of_two PASSED  [ 20%]
+tests/test_coverage.py::test_zero_requirements_uses_zero PASSED          [ 21%]
+tests/test_coverage.py::test_slugify_sample_covers_both_requirements PASSED [ 22%]
+tests/test_coverage.py::test_static_runner_does_not_run_coverage_checks PASSED [ 23%]
+tests/test_coverage.py::test_coverage_module_does_not_import_or_run_tests PASSED [ 24%]
+tests/test_dynamic.py::test_dynamic_checks_are_registered PASSED         [ 25%]
+tests/test_dynamic.py::test_slugify_imports_the_reference_solution PASSED [ 26%]
+tests/test_dynamic.py::test_slugify_has_no_dynamic_findings PASSED       [ 27%]
+tests/test_dynamic.py::test_wrong_solution_is_flagged_and_a_consistent_failure_is_not_flaky PASSED [ 28%]
+tests/test_dynamic.py::test_first_argument_cheat_passes_and_the_others_do_not PASSED [ 29%]
+tests/test_dynamic.py::test_counter_file_forces_a_flaky_result PASSED    [ 30%]
+tests/test_dynamic.py::test_hanging_child_returns_within_the_timeout PASSED [ 31%]
+tests/test_dynamic.py::test_child_cannot_open_a_tcp_socket PASSED        [ 32%]
+tests/test_hardcoded_solution.py::test_literal_return_is_confirmed_on_a_perturbed_input PASSED [ 33%]
+tests/test_hardcoded_solution.py::test_computed_return_is_not_flagged PASSED [ 34%]
+tests/test_hardcoded_solution.py::test_if_chain_on_literals_is_flagged_when_perturbation_changes PASSED [ 35%]
+tests/test_hardcoded_solution.py::test_literal_return_with_no_arguments_is_flagged PASSED [ 36%]
+tests/test_hardcoded_solution.py::test_subprocess_timeout_does_not_flag PASSED [ 37%]
+tests/test_loader.py::test_valid_folder_loads_id_title_and_requirement_count PASSED [ 38%]
+tests/test_loader.py::test_real_sample_task_loads_from_another_working_directory PASSED [ 39%]
+tests/test_loader.py::test_missing_file_or_directory_names_the_path[task.yaml-task.yaml-required file is missing] PASSED [ 40%]
+tests/test_loader.py::test_missing_file_or_directory_names_the_path[instruction.md-instruction.md-required file is missing] PASSED [ 41%]
+tests/test_loader.py::test_missing_file_or_directory_names_the_path[solution/solution.py-solution/solution.py-required file is missing] PASSED [ 42%]
+tests/test_loader.py::test_missing_file_or_directory_names_the_path[environment-environment-required directory is missing] PASSED [ 43%]
+tests/test_loader.py::test_missing_file_or_directory_names_the_path[tests-tests-required directory is missing] PASSED [ 44%]
+tests/test_loader.py::test_environment_file_is_rejected PASSED           [ 45%]
+tests/test_loader.py::test_missing_pytest_file_names_the_pattern PASSED  [ 46%]
+tests/test_loader.py::test_missing_field_names_the_field PASSED          [ 47%]
+tests/test_loader.py::test_wrong_field_type_names_the_value PASSED       [ 48%]
+tests/test_loader.py::test_unknown_field_names_the_value PASSED          [ 49%]
+tests/test_loader.py::test_non_python_language_names_the_value PASSED    [ 50%]
+tests/test_loader.py::test_empty_requirements_names_the_value PASSED     [ 50%]
+tests/test_loader.py::test_duplicate_requirement_id_names_the_later_value PASSED [ 51%]
+tests/test_loader.py::test_task_id_must_match_folder_name PASSED         [ 52%]
+tests/test_loader.py::test_path_outside_sample_tasks_names_the_path PASSED [ 53%]
+tests/test_loader.py::test_symlink_that_escapes_sample_tasks_is_refused PASSED [ 54%]
+tests/test_loader.py::test_nested_path_inside_sample_tasks_is_refused PASSED [ 55%]
+tests/test_loader.py::test_task_yaml_must_be_a_mapping PASSED            [ 56%]
+tests/test_loader.py::test_invalid_yaml_names_the_parser_error PASSED    [ 57%]
+tests/test_mutation.py::test_mutation_checks_stay_outside_checks_8_to_10 PASSED [ 58%]
+tests/test_mutation.py::test_operator_map_and_bools_and_branches PASSED  [ 59%]
+tests/test_mutation.py::test_each_comparison_flips_once PASSED           [ 60%]
+tests/test_mutation.py::test_float_and_negative_constants_move_by_one PASSED [ 61%]
+tests/test_mutation.py::test_if_expression_deletes_one_side PASSED       [ 62%]
+tests/test_mutation.py::test_cap_and_seed_keep_the_same_subset PASSED    [ 63%]
+tests/test_mutation.py::test_unparseable_text_is_excluded PASSED         [ 64%]
+tests/test_mutation.py::test_render_rejects_a_tree_that_does_not_parse PASSED [ 65%]
+tests/test_mutation.py::test_score_is_zero_when_there_are_no_mutants PASSED [ 66%]
+tests/test_mutation.py::test_auditor_does_not_import_or_exec_the_solution PASSED [ 67%]
+tests/test_mutation.py::test_slugify_mutation_score_is_stable_and_files_stay PASSED [ 68%]
+tests/test_mutation.py::test_positive_tests_kill_every_mutant PASSED     [ 69%]
+tests/test_mutation.py::test_weak_countdown_leaves_a_survivor_and_kills_a_timeout PASSED [ 70%]
+tests/test_nondeterministic.py::test_nondeterministic_uses_are_flagged[import random\n\ndef test_roll() -> None:\n    assert random.random() >= 0\n-random.random] PASSED [ 71%]
+tests/test_nondeterministic.py::test_nondeterministic_uses_are_flagged[import random\n\ndef test_imports_random() -> None:\n    assert True\n-imports random] PASSED [ 72%]
+tests/test_nondeterministic.py::test_nondeterministic_uses_are_flagged[import time\n\ndef test_wait() -> None:\n    time.sleep(0)\n    assert True\n-time.sleep] PASSED [ 73%]
+tests/test_nondeterministic.py::test_nondeterministic_uses_are_flagged[import time\n\ndef test_clock() -> None:\n    assert time.time() > 0\n-time.time] PASSED [ 74%]
+tests/test_nondeterministic.py::test_nondeterministic_uses_are_flagged[import datetime\n\ndef test_year() -> None:\n    assert datetime.datetime.now().year > 2000\n-datetime.datetime.now] PASSED [ 75%]
+tests/test_nondeterministic.py::test_nondeterministic_uses_are_flagged[import requests\n\ndef test_marker() -> None:\n    assert True\n-requests] PASSED [ 76%]
+tests/test_nondeterministic.py::test_nondeterministic_uses_are_flagged[import socket\n\ndef test_open_socket() -> None:\n    assert socket.socket() is not None\n-socket] PASSED [ 77%]
+tests/test_nondeterministic.py::test_nondeterministic_uses_are_flagged[import asyncio\n\ndef test_pause() -> None:\n    asyncio.sleep(0)\n-asyncio.sleep] PASSED [ 78%]
+tests/test_nondeterministic.py::test_seeded_or_deterministic_code_is_not_flagged[def test_add() -> None:\n    assert 1 + 1 == 2\n] PASSED [ 79%]
+tests/test_nondeterministic.py::test_seeded_or_deterministic_code_is_not_flagged[import random\n\ndef test_roll() -> None:\n    random.seed(1)\n    assert random.random() >= 0\n] PASSED [ 80%]
+tests/test_nondeterministic.py::test_seeded_or_deterministic_code_is_not_flagged[import time\n\ndef test_year() -> None:\n    assert time.strftime("%Y", time.gmtime(0)) == "1970"\n] PASSED [ 81%]
+tests/test_nondeterministic.py::test_random_instance_constructed_with_a_seed_is_not_flagged PASSED [ 82%]
+tests/test_nondeterministic.py::test_later_unseeded_random_replaces_an_earlier_seed PASSED [ 83%]
+tests/test_nondeterministic.py::test_fixture_that_freezes_time_is_not_flagged PASSED [ 84%]
+tests/test_nondeterministic.py::test_unrelated_fixture_does_not_hide_datetime_now PASSED [ 85%]
+tests/test_source_inspection.py::test_open_parse_and_membership_on_the_solution_are_flagged PASSED [ 86%]
+tests/test_source_inspection.py::test_open_of_a_non_solution_path_is_ignored PASSED [ 87%]
+tests/test_source_inspection.py::test_reassigned_path_is_not_treated_as_the_solution PASSED [ 88%]
+tests/test_source_inspection.py::test_aliased_inspect_getsource_is_flagged PASSED [ 89%]
+tests/test_static_checks.py::test_static_checks_are_registered PASSED    [ 90%]
+tests/test_static_checks.py::test_run_static_checks_invokes_the_registry PASSED [ 91%]
+tests/test_static_checks.py::test_slugify_sample_has_no_static_findings PASSED [ 92%]
+tests/test_weak_assertion.py::test_weak_patterns_are_flagged[def test_calls() -> None:\n    build()\n-does not contain an assert] PASSED [ 93%]
+tests/test_weak_assertion.py::test_weak_patterns_are_flagged[def test_always() -> None:\n    assert True\n-assert True] PASSED [ 94%]
+tests/test_weak_assertion.py::test_weak_patterns_are_flagged[def test_present() -> None:\n    assert build() is not None\n-is not None] PASSED [ 95%]
+tests/test_weak_assertion.py::test_weak_patterns_are_flagged[def test_kind() -> None:\n    assert isinstance(build(), int)\n-isinstance] PASSED [ 96%]
+tests/test_weak_assertion.py::test_weak_patterns_are_flagged[def test_swallows() -> None:\n    try:\n        build()\n    except Exception:\n        pass\n-only passes] PASSED [ 97%]
+tests/test_weak_assertion.py::test_real_equality_assert_is_not_flagged PASSED [ 98%]
+tests/test_weak_assertion.py::test_real_assert_beside_assert_true_is_not_flagged PASSED [ 99%]
+tests/test_weak_assertion.py::test_reraise_is_not_flagged PASSED         [100%]
+
+============================= 102 passed in 11.08s =============================
+```
+
+Measured mutation runs, after the checks above:
+
+```
+SLUGIFY
+score 1.0 killed 3 total 3 excluded 0 sampled False
+survivors 0
+- line 5: deleting the if branch
+- line 5: deleting the else branch
+- line 8: deleting the if branch
+IS_POSITIVE
+score 1.0 killed 3 total 3 excluded 0 survivors 0
+COUNTDOWN
+score 0.8 killed 4 total 5 excluded 0
+surviving_mutants [high] solution/solution.py:3
+Mutant survived at solution/solution.py:3 by changing constant 1 to 2.
+timeout mutant elapsed 2.006 timed_out True passed False
+```
+
+`auditor audit sample_tasks/slugify` (exit 0):
+
+```
+warning: later stages run task code and this is not a security sandbox
+id: slugify
+title: Turn a phrase into a URL slug
+requirements: 2
+```
+
+`auditor audit /tmp` (exit 1):
+
+```
+warning: later stages run task code and this is not a security sandbox
+error: path: must be inside sample_tasks (value: '/private/tmp')
+```
+
+Bugs found and fixed:
+- A unit test expected `>` to flip to `>=`. The operator map flips `>` to `<=`. The test was corrected. The map was not changed to match the test.
+- That same fixture treated the statement after `if` as an else branch. An `if` with an empty `orelse` has no else to delete. The fixture now has an `else`.
+- `ruff format` wanted the timeout-mutant lookup on one line. That layout was applied, and the checks were run again from the top.
+
+Files changed:
+`auditor/checks/__init__.py`, `auditor/checks/dynamic.py`, `auditor/checks/mutation.py`, `tests/test_cli.py`, `tests/test_mutation.py`.
+
+Decisions and open questions:
+- `surviving_mutants` is high, because a changed solution can still pass. It lives in `MUTATION_CHECKS`, not in `DYNAMIC_CHECKS`. A survivor does not change the results of checks 8 to 10. slugify still has no dynamic findings.
+- Seed 11 and cap 48 are fixed. The seed is used only when the site count is above 48. Two calls with the same seed and cap return the same mutants. slugify is under the cap, so every site was used.
+- The child timeout is the Stage 4 limit of 2 seconds. `timed_out` is not a pass, so that mutant is killed. The countdown mutant that subtracts 0 was killed that way. The other four countdown mutants finished. One of them, subtracting 2, survived the single assertion `countdown(2) == 0`.
+- These tests, and the slugify score of 1.0, were written by the same author as the checks. That is weak evidence about precision and recall. slugify's solution has no comparison, no numeric constant, and no `and` or `or`, so its three mutants are all branch deletions. A score of 1.0 on that task does not show that every kind of mutant would be caught.
+
+Next stage:
+Stage 6: labeled synthetic tasks. Waiting for "next".
