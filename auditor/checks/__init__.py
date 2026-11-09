@@ -6,6 +6,7 @@ from auditor.checks.coverage import (
     run_hidden_requirement,
     run_untested_requirement,
 )
+from auditor.checks.dynamic import DYNAMIC_CHECKS, run_dynamic_checks
 from auditor.checks.hardcoded import run_hardcoded_solution
 from auditor.checks.model import Finding, Rule, Severity, Snippet, StaticTarget
 from auditor.checks.nondeterministic import run_nondeterministic_test
@@ -25,6 +26,8 @@ COVERAGE_CHECKS: tuple[Rule, ...] = (
     Rule("untested_requirement", Severity.HIGH, run_untested_requirement),
     Rule("hidden_requirement", Severity.MEDIUM, run_hidden_requirement),
 )
+
+# Checks 8 to 10 live in DYNAMIC_CHECKS. CHECKS and COVERAGE_CHECKS are unchanged.
 
 
 def run_static_checks(target: StaticTarget) -> list[Finding]:
@@ -46,6 +49,7 @@ def run_coverage_checks(target: StaticTarget) -> list[Finding]:
 __all__ = [
     "CHECKS",
     "COVERAGE_CHECKS",
+    "DYNAMIC_CHECKS",
     "Finding",
     "Rule",
     "Severity",
@@ -53,6 +57,7 @@ __all__ = [
     "StaticTarget",
     "requirement_coverage",
     "run_coverage_checks",
+    "run_dynamic_checks",
     "run_static_checks",
     "target_from_task",
 ]

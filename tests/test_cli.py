@@ -68,6 +68,7 @@ def test_audit_command_stays_validation_only() -> None:
     assert "run_static_checks" not in source
     assert "run_coverage_checks" not in source
     assert "requirement_coverage" not in source
+    assert "run_dynamic_checks" not in source
 
 
 def _combined(result: Result) -> str:
