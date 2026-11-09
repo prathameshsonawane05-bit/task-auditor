@@ -1,0 +1,8 @@
+id: slugify
+title: Turn a phrase into a URL slug
+language: python
+requirements:
+  - id: R1
+    text: Lowercase the text and replace each run of non-alphanumeric characters with a single hyphen.
+  - id: R2
+    text: Strip leading and trailing hyphens.
