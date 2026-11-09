@@ -980,3 +980,197 @@ Decisions and open questions:
 
 Next stage:
 Stage 7: evaluation, precision and recall per check. Waiting for "next".
+
+## Stage 7: evaluation (commit 95e55c34276e63c8bd64f1895a1ce036fecfdb17)
+What was built:
+`tests/test_check_quality.py` runs checks 1 to 11 on every task under `sample_tasks`. A finding counts once per check per task. The test prints true positives, false positives, false negatives, precision, and recall. Precision is tp / (tp + fp). Recall is tp / (tp + fn). A zero denominator prints `n/a` and fails the bar. The test fails if any precision or recall is below 0.8. The printed table is saved in `docs/EVALUATION.md` under the heading v1.
+
+Every check is at 1.000. No check was changed. This set was written by the same author as the checks. Two tasks were edited after a first run so an extra cheat finding would disappear (`plant_hardcoded_solution_3` and `plant_solution_fails_3`). A perfect score here is weak evidence.
+
+Printed table:
+
+```
+check                      tp   fp   fn  precision   recall
+source_inspection_test      3    0    0      1.000    1.000
+weak_assertion              3    0    0      1.000    1.000
+hardcoded_solution          3    0    0      1.000    1.000
+brittle_format              3    0    0      1.000    1.000
+nondeterministic_test       3    0    0      1.000    1.000
+untested_requirement        3    0    0      1.000    1.000
+hidden_requirement          3    0    0      1.000    1.000
+solution_fails_tests        3    0    0      1.000    1.000
+cheat_solution_passes       3    0    0      1.000    1.000
+flaky_tests                 3    0    0      1.000    1.000
+surviving_mutants           3    0    0      1.000    1.000
+```
+
+Commands run and their real output:
+```
+.venv/bin/pytest -s tests/test_check_quality.py -v
+============================= test session starts ==============================
+platform darwin -- Python 3.11.14, pytest-9.2.0, pluggy-1.7.0 -- /Users/shubhambaviskar/Desktop/Eval Task Auditor/.venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /Users/shubhambaviskar/Desktop/Eval Task Auditor
+configfile: pyproject.toml
+collecting ... collected 2 items
+
+tests/test_check_quality.py::test_zero_denominator_is_below_the_bar PASSED
+tests/test_check_quality.py::test_check_quality_meets_the_bar check                      tp   fp   fn  precision   recall
+source_inspection_test      3    0    0      1.000    1.000
+weak_assertion              3    0    0      1.000    1.000
+hardcoded_solution          3    0    0      1.000    1.000
+brittle_format              3    0    0      1.000    1.000
+nondeterministic_test       3    0    0      1.000    1.000
+untested_requirement        3    0    0      1.000    1.000
+hidden_requirement          3    0    0      1.000    1.000
+solution_fails_tests        3    0    0      1.000    1.000
+cheat_solution_passes       3    0    0      1.000    1.000
+flaky_tests                 3    0    0      1.000    1.000
+surviving_mutants           3    0    0      1.000    1.000
+PASSED
+
+============================== 2 passed in 41.57s ==============================
+
+.venv/bin/ruff check .
+All checks passed!
+
+.venv/bin/ruff format --check .
+246 files already formatted
+
+.venv/bin/mypy
+Success: no issues found in 35 source files
+
+.venv/bin/pytest -v
+============================= test session starts ==============================
+platform darwin -- Python 3.11.14, pytest-9.2.0, pluggy-1.7.0 -- /Users/shubhambaviskar/Desktop/Eval Task Auditor/.venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /Users/shubhambaviskar/Desktop/Eval Task Auditor
+configfile: pyproject.toml
+testpaths: tests
+collecting ... collected 107 items
+
+tests/test_brittle_format.py::test_cutoff_is_40_characters PASSED        [  0%]
+tests/test_brittle_format.py::test_long_string_equality_without_a_specified_format_is_flagged PASSED [  1%]
+tests/test_brittle_format.py::test_numeric_equality_is_not_flagged PASSED [  2%]
+tests/test_brittle_format.py::test_same_literal_is_not_flagged_when_the_instruction_specifies_it PASSED [  3%]
+tests/test_brittle_format.py::test_short_string_equality_is_not_flagged PASSED [  4%]
+tests/test_check_quality.py::test_zero_denominator_is_below_the_bar PASSED [  5%]
+tests/test_check_quality.py::test_check_quality_meets_the_bar PASSED     [  6%]
+tests/test_cli.py::test_audit_prints_id_title_count_and_sandbox_warning PASSED [  7%]
+tests/test_cli.py::test_audit_prints_validation_error_and_exits_nonzero PASSED [  8%]
+tests/test_cli.py::test_audit_refuses_a_path_outside_sample_tasks PASSED [  9%]
+tests/test_cli.py::test_audit_command_stays_validation_only PASSED       [ 10%]
+tests/test_coverage.py::test_coverage_checks_are_registered PASSED       [ 11%]
+tests/test_coverage.py::test_untested_requirement_names_the_missing_id PASSED [ 12%]
+tests/test_coverage.py::test_covered_requirements_are_not_flagged_as_untested PASSED [ 13%]
+tests/test_coverage.py::test_two_decorators_on_one_test_cover_both_ids PASSED [ 14%]
+tests/test_coverage.py::test_alias_of_covers_is_not_recognized PASSED    [ 14%]
+tests/test_coverage.py::test_test_without_covers_is_hidden PASSED        [ 15%]
+tests/test_coverage.py::test_unknown_covers_id_is_hidden PASSED          [ 16%]
+tests/test_coverage.py::test_ordinary_equality_is_not_a_hidden_error PASSED [ 17%]
+tests/test_coverage.py::test_pytest_raises_match_absent_from_the_instruction_is_flagged PASSED [ 18%]
+tests/test_coverage.py::test_same_error_message_is_not_flagged_when_the_instruction_contains_it PASSED [ 19%]
+tests/test_coverage.py::test_exception_string_equality_absent_from_the_instruction_is_flagged PASSED [ 20%]
+tests/test_coverage.py::test_coverage_is_zero_one_and_two_of_two PASSED  [ 21%]
+tests/test_coverage.py::test_zero_requirements_uses_zero PASSED          [ 22%]
+tests/test_coverage.py::test_slugify_sample_covers_both_requirements PASSED [ 23%]
+tests/test_coverage.py::test_static_runner_does_not_run_coverage_checks PASSED [ 24%]
+tests/test_coverage.py::test_coverage_module_does_not_import_or_run_tests PASSED [ 25%]
+tests/test_dynamic.py::test_dynamic_checks_are_registered PASSED         [ 26%]
+tests/test_dynamic.py::test_slugify_imports_the_reference_solution PASSED [ 27%]
+tests/test_dynamic.py::test_slugify_has_no_dynamic_findings PASSED       [ 28%]
+tests/test_dynamic.py::test_wrong_solution_is_flagged_and_a_consistent_failure_is_not_flaky PASSED [ 28%]
+tests/test_dynamic.py::test_first_argument_cheat_passes_and_the_others_do_not PASSED [ 29%]
+tests/test_dynamic.py::test_counter_file_forces_a_flaky_result PASSED    [ 30%]
+tests/test_dynamic.py::test_hanging_child_returns_within_the_timeout PASSED [ 31%]
+tests/test_dynamic.py::test_child_cannot_open_a_tcp_socket PASSED        [ 32%]
+tests/test_hardcoded_solution.py::test_literal_return_is_confirmed_on_a_perturbed_input PASSED [ 33%]
+tests/test_hardcoded_solution.py::test_computed_return_is_not_flagged PASSED [ 34%]
+tests/test_hardcoded_solution.py::test_if_chain_on_literals_is_flagged_when_perturbation_changes PASSED [ 35%]
+tests/test_hardcoded_solution.py::test_literal_return_with_no_arguments_is_flagged PASSED [ 36%]
+tests/test_hardcoded_solution.py::test_subprocess_timeout_does_not_flag PASSED [ 37%]
+tests/test_labeled_tasks.py::test_good_tasks_have_empty_labels_and_one_module PASSED [ 38%]
+tests/test_labeled_tasks.py::test_flawed_tasks_cover_each_check_three_times PASSED [ 39%]
+tests/test_labeled_tasks.py::test_loader_and_checks_do_not_read_expected_findings PASSED [ 40%]
+tests/test_loader.py::test_valid_folder_loads_id_title_and_requirement_count PASSED [ 41%]
+tests/test_loader.py::test_real_sample_task_loads_from_another_working_directory PASSED [ 42%]
+tests/test_loader.py::test_missing_file_or_directory_names_the_path[task.yaml-task.yaml-required file is missing] PASSED [ 42%]
+tests/test_loader.py::test_missing_file_or_directory_names_the_path[instruction.md-instruction.md-required file is missing] PASSED [ 43%]
+tests/test_loader.py::test_missing_file_or_directory_names_the_path[solution/solution.py-solution/solution.py-required file is missing] PASSED [ 44%]
+tests/test_loader.py::test_missing_file_or_directory_names_the_path[environment-environment-required directory is missing] PASSED [ 45%]
+tests/test_loader.py::test_missing_file_or_directory_names_the_path[tests-tests-required directory is missing] PASSED [ 46%]
+tests/test_loader.py::test_environment_file_is_rejected PASSED           [ 47%]
+tests/test_loader.py::test_missing_pytest_file_names_the_pattern PASSED  [ 48%]
+tests/test_loader.py::test_missing_field_names_the_field PASSED          [ 49%]
+tests/test_loader.py::test_wrong_field_type_names_the_value PASSED       [ 50%]
+tests/test_loader.py::test_unknown_field_names_the_value PASSED          [ 51%]
+tests/test_loader.py::test_non_python_language_names_the_value PASSED    [ 52%]
+tests/test_loader.py::test_empty_requirements_names_the_value PASSED     [ 53%]
+tests/test_loader.py::test_duplicate_requirement_id_names_the_later_value PASSED [ 54%]
+tests/test_loader.py::test_task_id_must_match_folder_name PASSED         [ 55%]
+tests/test_loader.py::test_path_outside_sample_tasks_names_the_path PASSED [ 56%]
+tests/test_loader.py::test_symlink_that_escapes_sample_tasks_is_refused PASSED [ 57%]
+tests/test_loader.py::test_nested_path_inside_sample_tasks_is_refused PASSED [ 57%]
+tests/test_loader.py::test_task_yaml_must_be_a_mapping PASSED            [ 58%]
+tests/test_loader.py::test_invalid_yaml_names_the_parser_error PASSED    [ 59%]
+tests/test_mutation.py::test_mutation_checks_stay_outside_checks_8_to_10 PASSED [ 60%]
+tests/test_mutation.py::test_operator_map_and_bools_and_branches PASSED  [ 61%]
+tests/test_mutation.py::test_each_comparison_flips_once PASSED           [ 62%]
+tests/test_mutation.py::test_float_and_negative_constants_move_by_one PASSED [ 63%]
+tests/test_mutation.py::test_if_expression_deletes_one_side PASSED       [ 64%]
+tests/test_mutation.py::test_cap_and_seed_keep_the_same_subset PASSED    [ 65%]
+tests/test_mutation.py::test_unparseable_text_is_excluded PASSED         [ 66%]
+tests/test_mutation.py::test_render_rejects_a_tree_that_does_not_parse PASSED [ 67%]
+tests/test_mutation.py::test_score_is_zero_when_there_are_no_mutants PASSED [ 68%]
+tests/test_mutation.py::test_auditor_does_not_import_or_exec_the_solution PASSED [ 69%]
+tests/test_mutation.py::test_slugify_mutation_score_is_stable_and_files_stay PASSED [ 70%]
+tests/test_mutation.py::test_positive_tests_kill_every_mutant PASSED     [ 71%]
+tests/test_mutation.py::test_weak_countdown_leaves_a_survivor_and_kills_a_timeout PASSED [ 71%]
+tests/test_nondeterministic.py::test_nondeterministic_uses_are_flagged[import random\n\ndef test_roll() -> None:\n    assert random.random() >= 0\n-random.random] PASSED [ 72%]
+tests/test_nondeterministic.py::test_nondeterministic_uses_are_flagged[import random\n\ndef test_imports_random() -> None:\n    assert True\n-imports random] PASSED [ 73%]
+tests/test_nondeterministic.py::test_nondeterministic_uses_are_flagged[import time\n\ndef test_wait() -> None:\n    time.sleep(0)\n    assert True\n-time.sleep] PASSED [ 74%]
+tests/test_nondeterministic.py::test_nondeterministic_uses_are_flagged[import time\n\ndef test_clock() -> None:\n    assert time.time() > 0\n-time.time] PASSED [ 75%]
+tests/test_nondeterministic.py::test_nondeterministic_uses_are_flagged[import datetime\n\ndef test_year() -> None:\n    assert datetime.datetime.now().year > 2000\n-datetime.datetime.now] PASSED [ 76%]
+tests/test_nondeterministic.py::test_nondeterministic_uses_are_flagged[import requests\n\ndef test_marker() -> None:\n    assert True\n-requests] PASSED [ 77%]
+tests/test_nondeterministic.py::test_nondeterministic_uses_are_flagged[import socket\n\ndef test_open_socket() -> None:\n    assert socket.socket() is not None\n-socket] PASSED [ 78%]
+tests/test_nondeterministic.py::test_nondeterministic_uses_are_flagged[import asyncio\n\ndef test_pause() -> None:\n    asyncio.sleep(0)\n-asyncio.sleep] PASSED [ 79%]
+tests/test_nondeterministic.py::test_seeded_or_deterministic_code_is_not_flagged[def test_add() -> None:\n    assert 1 + 1 == 2\n] PASSED [ 80%]
+tests/test_nondeterministic.py::test_seeded_or_deterministic_code_is_not_flagged[import random\n\ndef test_roll() -> None:\n    random.seed(1)\n    assert random.random() >= 0\n] PASSED [ 81%]
+tests/test_nondeterministic.py::test_seeded_or_deterministic_code_is_not_flagged[import time\n\ndef test_year() -> None:\n    assert time.strftime("%Y", time.gmtime(0)) == "1970"\n] PASSED [ 82%]
+tests/test_nondeterministic.py::test_random_instance_constructed_with_a_seed_is_not_flagged PASSED [ 83%]
+tests/test_nondeterministic.py::test_later_unseeded_random_replaces_an_earlier_seed PASSED [ 84%]
+tests/test_nondeterministic.py::test_fixture_that_freezes_time_is_not_flagged PASSED [ 85%]
+tests/test_nondeterministic.py::test_unrelated_fixture_does_not_hide_datetime_now PASSED [ 85%]
+tests/test_source_inspection.py::test_open_parse_and_membership_on_the_solution_are_flagged PASSED [ 86%]
+tests/test_source_inspection.py::test_open_of_a_non_solution_path_is_ignored PASSED [ 87%]
+tests/test_source_inspection.py::test_reassigned_path_is_not_treated_as_the_solution PASSED [ 88%]
+tests/test_source_inspection.py::test_aliased_inspect_getsource_is_flagged PASSED [ 89%]
+tests/test_static_checks.py::test_static_checks_are_registered PASSED    [ 90%]
+tests/test_static_checks.py::test_run_static_checks_invokes_the_registry PASSED [ 91%]
+tests/test_static_checks.py::test_slugify_sample_has_no_static_findings PASSED [ 92%]
+tests/test_weak_assertion.py::test_weak_patterns_are_flagged[def test_calls() -> None:\n    build()\n-does not contain an assert] PASSED [ 93%]
+tests/test_weak_assertion.py::test_weak_patterns_are_flagged[def test_always() -> None:\n    assert True\n-assert True] PASSED [ 94%]
+tests/test_weak_assertion.py::test_weak_patterns_are_flagged[def test_present() -> None:\n    assert build() is not None\n-is not None] PASSED [ 95%]
+tests/test_weak_assertion.py::test_weak_patterns_are_flagged[def test_kind() -> None:\n    assert isinstance(build(), int)\n-isinstance] PASSED [ 96%]
+tests/test_weak_assertion.py::test_weak_patterns_are_flagged[def test_swallows() -> None:\n    try:\n        build()\n    except Exception:\n        pass\n-only passes] PASSED [ 97%]
+tests/test_weak_assertion.py::test_real_equality_assert_is_not_flagged PASSED [ 98%]
+tests/test_weak_assertion.py::test_real_assert_beside_assert_true_is_not_flagged PASSED [ 99%]
+tests/test_weak_assertion.py::test_reraise_is_not_flagged PASSED         [100%]
+
+============================= 107 passed in 51.63s =============================
+```
+
+Bugs found and fixed:
+The table header was one character over the ruff line limit, and the formatter wanted it on one indented line inside parentheses. That formatting was fixed before the suite ran. No check was below 0.8, so no check was changed.
+
+Files changed:
+`tests/test_check_quality.py`, `docs/EVALUATION.md`.
+
+Decisions and open questions:
+- Checks 1 to 11 are the four registries, in order. Check 11 is called through `run_surviving_mutants`, separate from checks 8 to 10.
+- A finding counts once per check per task. Labels stay in `expected_findings.yaml`. The checks still do not read that file.
+- No denominator was zero. Every precision and recall is 1.000, which is at or above 0.8.
+- The labels and the checks were written by the same author. The two task edits happened after a first run. This table is weak evidence.
+
+Next stage:
+Stage 8: held-out tasks, written without reading the check code. Waiting for "next".
