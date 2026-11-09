@@ -6,15 +6,15 @@ The tasks in this repository are synthetic. They are not taken from a company, a
 
 ## Run an audit
 
-Python 3.11 is required.
+Python 3.11 and [uv](https://docs.astral.sh/uv/) are required. `python3.11 -m venv` fails for the uv-installed interpreter: the new environment looks for the standard library under `/install` and `ensurepip` exits before pip exists.
 
 ```sh
-python3.11 -m venv .venv
-.venv/bin/python -m pip install -e ".[dev]"
+uv venv --python 3.11 .venv
+uv pip install --python .venv/bin/python -e ".[dev]"
 .venv/bin/auditor audit sample_tasks/slugify --out reports
 ```
 
-The command prints a warning, then writes `reports/slugify.json` and `reports/slugify.md`. Each report has the findings, the requirement coverage, and the mutation score. A finding has `check`, `severity`, `location`, and `explanation`.
+The command prints `warning: this command runs task code and is not a security sandbox`, then writes `reports/slugify.json` and `reports/slugify.md`. Each report has the findings, the requirement coverage, and the mutation score. A finding has `check`, `severity`, `location`, and `explanation`.
 
 The path must be a task folder directly inside `sample_tasks`. Any other path is refused before the checks run. `reports/` is gitignored.
 
@@ -27,10 +27,25 @@ The dashboard stores reports you choose to keep. It does not run the audit.
 ```sh
 cd frontend
 npm ci
+npm run typecheck
+npm run build
 npm run dev
 ```
 
+Node.js is required for those commands. `npm run typecheck` runs `tsc --noEmit`. `npm run build` runs that check again and then the Vite build.
+
 Post a report JSON to `http://127.0.0.1:8000/api/tasks`. The page at `http://127.0.0.1:5173` lists what is stored. An empty database shows "No tasks stored." The database file is `auditor.sqlite` in the project directory, or the path in `AUDITOR_DB`. Do not commit it. Vite proxies `/api` to port 8000. Set `AUDITOR_API` when the API is on another origin.
+
+## Checks
+
+From the repository root, after the install above:
+
+```sh
+.venv/bin/ruff check .
+.venv/bin/ruff format --check .
+.venv/bin/mypy
+.venv/bin/pytest
+```
 
 ## Add a check
 

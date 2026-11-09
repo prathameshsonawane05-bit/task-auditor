@@ -32,7 +32,7 @@ def test_audit_prints_id_title_count_and_sandbox_warning(
     assert "requirement_coverage: 1.000" in text
     assert "mutation_score: 1.000" in text
     assert "findings: 0" in text
-    assert "later stages run task code" in text
+    assert "this command runs task code" in text
     assert "not a security sandbox" in text
     assert "Traceback" not in text
     assert REAL_SAMPLE.is_dir()
@@ -64,7 +64,7 @@ def test_audit_prints_validation_error_and_exits_nonzero(
     text = _combined(result)
     assert result.exit_code == 1
     assert "error: language: must be 'python' (value: 'javascript')" in text
-    assert "later stages run task code" in text
+    assert "this command runs task code" in text
     assert "not a security sandbox" in text
     assert "Traceback" not in text
 
@@ -83,7 +83,7 @@ def test_audit_refuses_a_path_outside_sample_tasks(
     assert result.exit_code == 1
     assert "error: path: must be inside sample_tasks" in text
     assert str(tmp_path.resolve()) in text
-    assert "later stages run task code" in text
+    assert "this command runs task code" in text
     assert "Traceback" not in text
 
 
@@ -101,7 +101,7 @@ def test_audit_writes_the_planted_finding_in_both_reports(
 
     text = _combined(result)
     assert result.exit_code == 0
-    assert "later stages run task code" in text
+    assert "this command runs task code" in text
     assert "not a security sandbox" in text
     assert "Traceback" not in text
     payload = _load(out / "plant_weak_assertion_1.json")

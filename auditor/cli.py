@@ -12,7 +12,7 @@ from auditor.run import run_audit
 
 app = typer.Typer(add_completion=False, no_args_is_help=True)
 
-_WARNING = "warning: later stages run task code and this is not a security sandbox"
+_WARNING = "warning: this command runs task code and is not a security sandbox"
 
 
 @app.callback()
