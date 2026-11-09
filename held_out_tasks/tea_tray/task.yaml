@@ -1,0 +1,10 @@
+id: tea_tray
+title: Sugar spoons for sweet tea and plain tea
+language: python
+requirements:
+  - id: R1
+    text: When the visitor asks for sweet tea, double the spoons of sugar.
+  - id: R2
+    text: When the visitor asks for plain tea, leave the spoons unchanged.
+  - id: R3
+    text: Any other kind of tea raises ValueError and says tea is sweet or plain.

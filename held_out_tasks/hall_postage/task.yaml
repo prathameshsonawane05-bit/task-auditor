@@ -1,0 +1,8 @@
+id: hall_postage
+title: The card pinned above the parcel scale
+language: python
+requirements:
+  - id: R1
+    text: Charge 80 pence under 100 grams, 150 pence from 100 up to but not including 500, and 320 pence from 500 through 2000.
+  - id: R2
+    text: Refuse a negative weight and a weight above 2000 grams with the two messages written on the card.

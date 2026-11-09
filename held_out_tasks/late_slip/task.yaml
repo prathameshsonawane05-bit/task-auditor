@@ -1,0 +1,8 @@
+id: late_slip
+title: The library fine on the hall borrowing card
+language: python
+requirements:
+  - id: R1
+    text: Charge 25 pence a day for a book that is late by fewer than 7 days, and charge nothing on the day it is due.
+  - id: R2
+    text: Cap the fine at 200 pence from day 7 onward, and refuse a negative day count with the message on the card.

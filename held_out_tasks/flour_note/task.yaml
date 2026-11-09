@@ -1,0 +1,8 @@
+id: flour_note
+title: Grams of flour written in the recipe margin
+language: python
+requirements:
+  - id: R1
+    text: Count 120 grams for each cup, and zero grams when the cup count is zero.
+  - id: R2
+    text: Refuse a negative cup count with the message in the margin.

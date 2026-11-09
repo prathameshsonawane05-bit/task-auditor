@@ -1,0 +1,8 @@
+id: raffle_slip
+title: Raffle tickets from the table numbers
+language: python
+requirements:
+  - id: R1
+    text: The raffle ticket is the table number multiplied by nine.
+  - id: R2
+    text: Any table other than 1, 2, or 4 raises ValueError and says that table is not on the slip.

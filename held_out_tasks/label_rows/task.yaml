@@ -1,0 +1,8 @@
+id: label_rows
+title: Name cards laid out in rows on the trestle
+language: python
+requirements:
+  - id: R1
+    text: Pack the labels from left to right into rows of the given width, leaving the last row short when the names do not fill it.
+  - id: R2
+    text: Refuse a width below one with the message that a row needs at least one slot.

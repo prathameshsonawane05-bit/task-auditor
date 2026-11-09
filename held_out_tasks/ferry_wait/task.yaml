@@ -1,0 +1,8 @@
+id: ferry_wait
+title: Minutes until the next boat on the hall clock
+language: python
+requirements:
+  - id: R1
+    text: Return the minutes until the next departure at or after now, using the sheet in the order it is written.
+  - id: R2
+    text: Return -1 when every listed departure is already behind now, including when the sheet is empty.

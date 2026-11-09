@@ -1,0 +1,8 @@
+id: stall_call
+title: The shout that opens the jar stall
+language: python
+requirements:
+  - id: R1
+    text: Give the volunteer a spoken summary that names how many jars were set out and the price in pence.
+  - id: R2
+    text: Refuse a negative jar count or a negative price with the message from the stall note.

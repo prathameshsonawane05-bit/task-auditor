@@ -1,0 +1,8 @@
+id: pantry_jars
+title: Adding up one jar from the pantry list
+language: python
+requirements:
+  - id: R1
+    text: Add the counts whose names match the jar exactly, and let a removal be a negative count.
+  - id: R2
+    text: Return zero when the jar name is absent, including when the list is empty.

@@ -1,0 +1,6 @@
+id: oven_check
+title: Whether the bake-sale oven is in the window
+language: python
+requirements:
+  - id: R1
+    text: Return true only when the temperature is from 180 degrees through 200 degrees, including both ends.

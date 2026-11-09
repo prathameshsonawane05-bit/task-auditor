@@ -1,0 +1,8 @@
+id: kettle_note
+title: How long the urn needs for a round of mugs
+language: python
+requirements:
+  - id: R1
+    text: Allow 120 seconds for each mug, so two mugs are 240 seconds and three mugs are 360.
+  - id: R2
+    text: Refuse fewer than one mug with the message from the urn note.

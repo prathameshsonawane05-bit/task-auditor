@@ -1,0 +1,8 @@
+id: badge_hello
+title: The hello line on a Saturday name badge
+language: python
+requirements:
+  - id: R1
+    text: Return a hello line that uses the name with surrounding spaces removed.
+  - id: R2
+    text: Refuse a blank name, after the spaces are removed, with the message from the welcome desk.
