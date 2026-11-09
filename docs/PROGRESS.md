@@ -101,3 +101,136 @@ Decisions and open questions:
 
 Next stage:
 Stage 2: static AST checks 1 to 5, each with positive, negative, and edge-case tests on tiny hand-written snippets. Waiting for "next".
+
+## Stage 2: static checks 1 to 5 (commit f7250cc7464e1268675712a0f02dc185ee192bdf)
+What was built:
+Five registered static rules in `auditor.checks`. Each finding has a check name, a severity, a location, and one sentence that names the evidence. `auditor audit` still only validates a task folder. It does not import the checks and does not print findings. `run_static_checks` runs the five rules on snippets. The invented `slugify` sample produces no findings.
+
+The snippet tests for each check were written by the same author as the checks. Passing them is weak evidence.
+
+Commands run and their real output:
+```
+.venv/bin/ruff check .
+All checks passed!
+
+.venv/bin/ruff format --check .
+36 files already formatted
+
+.venv/bin/mypy
+Success: no issues found in 27 source files
+
+.venv/bin/pytest -v
+============================= test session starts ==============================
+platform darwin -- Python 3.11.14, pytest-9.2.0, pluggy-1.7.0 -- /Users/shubhambaviskar/Desktop/Eval Task Auditor/.venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /Users/shubhambaviskar/Desktop/Eval Task Auditor
+configfile: pyproject.toml
+testpaths: tests
+collecting ... collected 65 items
+
+tests/test_brittle_format.py::test_cutoff_is_40_characters PASSED        [  1%]
+tests/test_brittle_format.py::test_long_string_equality_without_a_specified_format_is_flagged PASSED [  3%]
+tests/test_brittle_format.py::test_numeric_equality_is_not_flagged PASSED [  4%]
+tests/test_brittle_format.py::test_same_literal_is_not_flagged_when_the_instruction_specifies_it PASSED [  6%]
+tests/test_brittle_format.py::test_short_string_equality_is_not_flagged PASSED [  7%]
+tests/test_cli.py::test_audit_prints_id_title_count_and_sandbox_warning PASSED [  9%]
+tests/test_cli.py::test_audit_prints_validation_error_and_exits_nonzero PASSED [ 10%]
+tests/test_cli.py::test_audit_refuses_a_path_outside_sample_tasks PASSED [ 12%]
+tests/test_cli.py::test_audit_command_stays_validation_only PASSED       [ 13%]
+tests/test_hardcoded_solution.py::test_literal_return_is_confirmed_on_a_perturbed_input PASSED [ 15%]
+tests/test_hardcoded_solution.py::test_computed_return_is_not_flagged PASSED [ 16%]
+tests/test_hardcoded_solution.py::test_if_chain_on_literals_is_flagged_when_perturbation_changes PASSED [ 18%]
+tests/test_hardcoded_solution.py::test_literal_return_with_no_arguments_is_flagged PASSED [ 20%]
+tests/test_hardcoded_solution.py::test_subprocess_timeout_does_not_flag PASSED [ 21%]
+tests/test_loader.py::test_valid_folder_loads_id_title_and_requirement_count PASSED [ 23%]
+tests/test_loader.py::test_real_sample_task_loads_from_another_working_directory PASSED [ 24%]
+tests/test_loader.py::test_missing_file_or_directory_names_the_path[task.yaml-task.yaml-required file is missing] PASSED [ 26%]
+tests/test_loader.py::test_missing_file_or_directory_names_the_path[instruction.md-instruction.md-required file is missing] PASSED [ 27%]
+tests/test_loader.py::test_missing_file_or_directory_names_the_path[solution/solution.py-solution/solution.py-required file is missing] PASSED [ 29%]
+tests/test_loader.py::test_missing_file_or_directory_names_the_path[environment-environment-required directory is missing] PASSED [ 30%]
+tests/test_loader.py::test_missing_file_or_directory_names_the_path[tests-tests-required directory is missing] PASSED [ 32%]
+tests/test_loader.py::test_environment_file_is_rejected PASSED           [ 33%]
+tests/test_loader.py::test_missing_pytest_file_names_the_pattern PASSED  [ 35%]
+tests/test_loader.py::test_missing_field_names_the_field PASSED          [ 36%]
+tests/test_loader.py::test_wrong_field_type_names_the_value PASSED       [ 38%]
+tests/test_loader.py::test_unknown_field_names_the_value PASSED          [ 40%]
+tests/test_loader.py::test_non_python_language_names_the_value PASSED    [ 41%]
+tests/test_loader.py::test_empty_requirements_names_the_value PASSED     [ 43%]
+tests/test_loader.py::test_duplicate_requirement_id_names_the_later_value PASSED [ 44%]
+tests/test_loader.py::test_task_id_must_match_folder_name PASSED         [ 46%]
+tests/test_loader.py::test_path_outside_sample_tasks_names_the_path PASSED [ 47%]
+tests/test_loader.py::test_symlink_that_escapes_sample_tasks_is_refused PASSED [ 49%]
+tests/test_loader.py::test_nested_path_inside_sample_tasks_is_refused PASSED [ 50%]
+tests/test_loader.py::test_task_yaml_must_be_a_mapping PASSED            [ 52%]
+tests/test_loader.py::test_invalid_yaml_names_the_parser_error PASSED    [ 53%]
+tests/test_nondeterministic.py::test_nondeterministic_uses_are_flagged[import random\n\ndef test_roll() -> None:\n    assert random.random() >= 0\n-random.random] PASSED [ 55%]
+tests/test_nondeterministic.py::test_nondeterministic_uses_are_flagged[import random\n\ndef test_imports_random() -> None:\n    assert True\n-imports random] PASSED [ 56%]
+tests/test_nondeterministic.py::test_nondeterministic_uses_are_flagged[import time\n\ndef test_wait() -> None:\n    time.sleep(0)\n    assert True\n-time.sleep] PASSED [ 58%]
+tests/test_nondeterministic.py::test_nondeterministic_uses_are_flagged[import time\n\ndef test_clock() -> None:\n    assert time.time() > 0\n-time.time] PASSED [ 60%]
+tests/test_nondeterministic.py::test_nondeterministic_uses_are_flagged[import datetime\n\ndef test_year() -> None:\n    assert datetime.datetime.now().year > 2000\n-datetime.datetime.now] PASSED [ 61%]
+tests/test_nondeterministic.py::test_nondeterministic_uses_are_flagged[import requests\n\ndef test_marker() -> None:\n    assert True\n-requests] PASSED [ 63%]
+tests/test_nondeterministic.py::test_nondeterministic_uses_are_flagged[import socket\n\ndef test_open_socket() -> None:\n    assert socket.socket() is not None\n-socket] PASSED [ 64%]
+tests/test_nondeterministic.py::test_nondeterministic_uses_are_flagged[import asyncio\n\ndef test_pause() -> None:\n    asyncio.sleep(0)\n-asyncio.sleep] PASSED [ 66%]
+tests/test_nondeterministic.py::test_seeded_or_deterministic_code_is_not_flagged[def test_add() -> None:\n    assert 1 + 1 == 2\n] PASSED [ 67%]
+tests/test_nondeterministic.py::test_seeded_or_deterministic_code_is_not_flagged[import random\n\ndef test_roll() -> None:\n    random.seed(1)\n    assert random.random() >= 0\n] PASSED [ 69%]
+tests/test_nondeterministic.py::test_seeded_or_deterministic_code_is_not_flagged[import time\n\ndef test_year() -> None:\n    assert time.strftime("%Y", time.gmtime(0)) == "1970"\n] PASSED [ 70%]
+tests/test_nondeterministic.py::test_random_instance_constructed_with_a_seed_is_not_flagged PASSED [ 72%]
+tests/test_nondeterministic.py::test_later_unseeded_random_replaces_an_earlier_seed PASSED [ 73%]
+tests/test_nondeterministic.py::test_fixture_that_freezes_time_is_not_flagged PASSED [ 75%]
+tests/test_nondeterministic.py::test_unrelated_fixture_does_not_hide_datetime_now PASSED [ 76%]
+tests/test_source_inspection.py::test_open_parse_and_membership_on_the_solution_are_flagged PASSED [ 78%]
+tests/test_source_inspection.py::test_open_of_a_non_solution_path_is_ignored PASSED [ 80%]
+tests/test_source_inspection.py::test_reassigned_path_is_not_treated_as_the_solution PASSED [ 81%]
+tests/test_source_inspection.py::test_aliased_inspect_getsource_is_flagged PASSED [ 83%]
+tests/test_static_checks.py::test_static_checks_are_registered PASSED    [ 84%]
+tests/test_static_checks.py::test_run_static_checks_invokes_the_registry PASSED [ 86%]
+tests/test_static_checks.py::test_slugify_sample_has_no_static_findings PASSED [ 87%]
+tests/test_weak_assertion.py::test_weak_patterns_are_flagged[def test_calls() -> None:\n    build()\n-does not contain an assert] PASSED [ 89%]
+tests/test_weak_assertion.py::test_weak_patterns_are_flagged[def test_always() -> None:\n    assert True\n-assert True] PASSED [ 90%]
+tests/test_weak_assertion.py::test_weak_patterns_are_flagged[def test_present() -> None:\n    assert build() is not None\n-is not None] PASSED [ 92%]
+tests/test_weak_assertion.py::test_weak_patterns_are_flagged[def test_kind() -> None:\n    assert isinstance(build(), int)\n-isinstance] PASSED [ 93%]
+tests/test_weak_assertion.py::test_weak_patterns_are_flagged[def test_swallows() -> None:\n    try:\n        build()\n    except Exception:\n        pass\n-only passes] PASSED [ 95%]
+tests/test_weak_assertion.py::test_real_equality_assert_is_not_flagged PASSED [ 96%]
+tests/test_weak_assertion.py::test_real_assert_beside_assert_true_is_not_flagged PASSED [ 98%]
+tests/test_weak_assertion.py::test_reraise_is_not_flagged PASSED         [100%]
+
+============================== 65 passed in 0.82s ==============================
+```
+
+`auditor audit sample_tasks/slugify` still only validates (exit 0):
+
+```
+warning: later stages run task code and this is not a security sandbox
+id: slugify
+title: Turn a phrase into a URL slug
+requirements: 2
+```
+
+`auditor audit /tmp` (exit 1):
+
+```
+warning: later stages run task code and this is not a security sandbox
+error: path: must be inside sample_tasks (value: '/private/tmp')
+```
+
+Bugs found and fixed:
+- The first pytest collection failed with `NameError: name '_Scope' is not defined`. The return annotation on `_Scope.child` was evaluated while the class body was still running. `from __future__ import annotations` defers that annotation.
+- Ruff reported unsorted imports, lines over 88 characters, and two nested `if` statements. Formatting and combining those conditions cleared them.
+- A name that once held a solution path kept that binding after a later assignment to a non-constant. `open()` of the new value could still look like the solution file. A new assignment now replaces the old path, source, and handle binding.
+- The same name could be both a seeded `random.Random(seed)` and a later `random.Random()`. The seeded set was checked first, so the unseeded instance was ignored. The last assignment wins.
+- `_TIME_CALLS` was a module-level set. It is now a frozenset. The check registry is a tuple.
+
+Files changed:
+`auditor/checks/__init__.py`, `auditor/checks/brittle_format.py`, `auditor/checks/hardcoded.py`, `auditor/checks/model.py`, `auditor/checks/nondeterministic.py`, `auditor/checks/parsing.py`, `auditor/checks/sandbox.py`, `auditor/checks/source_inspection.py`, `auditor/checks/target.py`, `auditor/checks/weak_assertion.py`, `tests/check_support.py`, `tests/test_brittle_format.py`, `tests/test_cli.py`, `tests/test_hardcoded_solution.py`, `tests/test_nondeterministic.py`, `tests/test_source_inspection.py`, `tests/test_static_checks.py`, `tests/test_weak_assertion.py`.
+
+Decisions and open questions:
+- Severity is `high`, `medium`, or `low`. High means the task can pass without the behavior the instruction describes: `source_inspection_test` and `hardcoded_solution`. Medium means the assertion is too weak, or it demands an exact string the instruction never gives: `weak_assertion` and `brittle_format`. Low means the result can change without a solution change: `nondeterministic_test`.
+- `open()` of a non-solution path is ignored. A solution path has the file name `solution.py`, or a `solution` directory component and a `.py` suffix. A path this checker cannot resolve to a string is ignored. `inspect.getsource` and `ast.parse` are flagged on every call, including `import inspect as ins`. Membership is flagged only for `in` when the right side was read from the solution file or from `getsource`. A string literal on the right, and `not in`, are not flagged. `pathlib.Path.read_text` and `os.path.join` are not resolved.
+- A real assert anywhere in a test suppresses `weak_assertion`, including a real assert beside `assert True` and a real assert beside `except: pass`. `assert x` counts as real. `pytest.raises` does not, so a test that only uses it is reported as having no assert. `!= None` is not the `is not None` pattern. A handler counts as swallowing errors only when its body is exclusively `pass`. A handler that re-raises, with no assert and no pass-only handler, is not flagged. One finding is reported per test.
+- `hardcoded_solution` does not import or exec the solution in the auditor process. A child process runs `sys.executable -I` with a 2 second timeout. The child environment is only `PATH`, when set, and `PYTHONDONTWRITEBYTECODE`. Results are written to a file. The original call must JSON-equal the test literal. The first argument is perturbed: a string gains a trailing `q`, an int or float increases by 1, and a bool flips. No arguments, or an argument of another type, is reported as no input to perturb. Timeout, crash, or a non-JSON value is not flagged. False positives still expected: a correct function whose specified result is a constant, and a correct literal lookup table. False negatives: a keyword argument, an expected value that is not a literal, a conditional expression such as `return "a" if x else "b"`, a function with no return statement, and a child that times out or crashes.
+- `brittle_format` uses a cutoff of 40 characters. A 40-character string can flag. A 39-character string does not. The instruction specifies that format only when it contains the exact string. The words "json" and "format" do not count. An f-string is not flagged. A long string that appears only as sample input is treated as specified, which can hide a real format demand.
+- A seed is `random.seed(...)` anywhere in the file, or `random.Random(...)` with at least one argument. `random.Random()` is not a seed. A seeded instance covers calls on that name only. One `random.seed` covers random-module calls for the whole file, even in a later line or a dead branch. `import random` is flagged only when the file has no seed, no `Random` instance, and no random call. `import time` alone is not flagged. A time fixture is `@pytest.fixture` or `@fixture` whose body mentions `freeze_time`, the attribute `now`, or the strings "now", "time.time", or "sleep". It covers `time.time`, `time.time_ns`, `time.sleep`, `asyncio.sleep`, and `datetime.now` only in tests that take that fixture as a parameter. `@pytest.mark.usefixtures` and `@freeze_time` on the test are not recognized. Network imports and calls are always flagged. The network modules are `socket`, `requests`, `httpx`, `aiohttp`, `urllib.request`, and `http.client`. There is no network-fixture escape.
+- These snippet tests, and the clean result on `slugify`, were written by the same author as the checks. That is weak evidence about precision and recall.
+
+Next stage:
+Stage 3: coverage checks 6 and 7, plus the requirement coverage percentage. Waiting for "next".
