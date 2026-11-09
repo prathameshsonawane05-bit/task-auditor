@@ -1664,3 +1664,60 @@ Decisions and open questions:
 
 Next stage:
 Stage 10: README, docs/DESIGN.md, and a GitHub Actions workflow. Waiting for "next".
+
+## Stage 10: docs and CI (commit 5c3b171919e3a311e7002ea7de8cfdb5e9cf370a)
+What was built:
+`README.md` says what TaskAuditor is, how to run an audit, and how to add a check. A finding has `check`, `severity`, `location`, and a one-sentence `explanation`. Static checks join `CHECKS`, coverage checks join `COVERAGE_CHECKS`, pytest checks join `DYNAMIC_CHECKS`, and the mutation check joins `MUTATION_CHECKS`. A new check needs a positive case, a negative case, and an edge case. The README then states the limitations: Python and pytest only, the network block is not a sandbox, the copy rule, the mutation cap and seed, the weak v1 score, and the untuned held-out misses.
+
+`docs/DESIGN.md` explains the task folder, the four registries, the temp-directory runner, and how precision and recall are counted. It points at the v1 and Held-out tables in `docs/EVALUATION.md`. Those tables were not rewritten.
+
+`.github/workflows/checks.yml` runs ruff, ruff format, mypy, pytest, `tsc --noEmit`, and the Vite build. It uses no secrets and no database file.
+
+Checks 1 to 11 were not changed. `sample_tasks`, `held_out_tasks`, and both evaluation tables were not edited.
+
+Commands run and their real output:
+```
+.venv/bin/python -c "import yaml; yaml.safe_load(open('.github/workflows/checks.yml')); print('workflow yaml ok')"
+workflow yaml ok
+
+.venv/bin/ruff check .
+All checks passed!
+
+.venv/bin/ruff format --check .
+314 files already formatted
+
+.venv/bin/mypy
+Success: no issues found in 41 source files
+
+.venv/bin/pytest -q
+........................................................................ [ 64%]
+.......................................                                  [100%]
+111 passed in 70.78s (0:01:10)
+
+npx tsc --noEmit && npx vite build
+vite v6.4.6 building for production...
+transforming...
+✓ 29 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.40 kB │ gzip:  0.27 kB
+dist/assets/index-CqjeQbxl.css    1.52 kB │ gzip:  0.67 kB
+dist/assets/index-CUucqIJ5.js   226.74 kB │ gzip: 70.48 kB
+✓ built in 476ms
+```
+
+`tsc --noEmit` printed nothing and exited 0. The Vite lines followed it.
+
+Bugs found and fixed:
+None. The first YAML parse used a Python that does not have PyYAML. The project virtualenv parsed the workflow.
+
+Files changed:
+`README.md`, `docs/DESIGN.md`, `.github/workflows/checks.yml`.
+
+Decisions and open questions:
+- The audit command still calls `measure_mutations` once. The design note says a new entry in `MUTATION_CHECKS` is not run until that call is updated.
+- The workflow installs the package with pip and the dashboard with `npm ci`. It does not start Uvicorn and does not read `auditor.sqlite`.
+- v1 remains a same-author score. The held-out misses stay as recorded: `pytest.raises` with no assert, the postage price table, and the `price_pence < -1` survivor.
+
+Next stage:
+Stage 11: fresh-clone audit from the README. Waiting for "next".
