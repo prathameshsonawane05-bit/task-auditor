@@ -242,6 +242,15 @@ def run_suite(root: Path) -> SuiteResult:
     return _run_once(root, solution_text=None)
 
 
+def run_suite_source(root: Path, solution_text: str) -> SuiteResult:
+    """Run the task tests against replacement solution text.
+
+    This is the same temp directory, timeout, network block, and copy rule
+    as checks 8 to 10. The text is written only in the temp directory.
+    """
+    return _run_once(root, solution_text)
+
+
 DYNAMIC_CHECKS: tuple[DynamicRule, ...] = (
     DynamicRule(SOLUTION_FAILS, Severity.HIGH, run_solution_fails_tests),
     DynamicRule(CHEAT_PASSES, Severity.HIGH, run_cheat_solution_passes),

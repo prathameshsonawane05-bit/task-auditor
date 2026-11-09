@@ -9,6 +9,11 @@ from auditor.checks.coverage import (
 from auditor.checks.dynamic import DYNAMIC_CHECKS, run_dynamic_checks
 from auditor.checks.hardcoded import run_hardcoded_solution
 from auditor.checks.model import Finding, Rule, Severity, Snippet, StaticTarget
+from auditor.checks.mutation import (
+    MUTATION_CHECKS,
+    measure_mutations,
+    run_surviving_mutants,
+)
 from auditor.checks.nondeterministic import run_nondeterministic_test
 from auditor.checks.source_inspection import run_source_inspection
 from auditor.checks.target import target_from_task
@@ -27,7 +32,8 @@ COVERAGE_CHECKS: tuple[Rule, ...] = (
     Rule("hidden_requirement", Severity.MEDIUM, run_hidden_requirement),
 )
 
-# Checks 8 to 10 live in DYNAMIC_CHECKS. CHECKS and COVERAGE_CHECKS are unchanged.
+# Checks 8 to 10 live in DYNAMIC_CHECKS. Check 11 lives in MUTATION_CHECKS.
+# CHECKS and COVERAGE_CHECKS are unchanged.
 
 
 def run_static_checks(target: StaticTarget) -> list[Finding]:
@@ -50,14 +56,17 @@ __all__ = [
     "CHECKS",
     "COVERAGE_CHECKS",
     "DYNAMIC_CHECKS",
+    "MUTATION_CHECKS",
     "Finding",
     "Rule",
     "Severity",
     "Snippet",
     "StaticTarget",
+    "measure_mutations",
     "requirement_coverage",
     "run_coverage_checks",
     "run_dynamic_checks",
     "run_static_checks",
+    "run_surviving_mutants",
     "target_from_task",
 ]
