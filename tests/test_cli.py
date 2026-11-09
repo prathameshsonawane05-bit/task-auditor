@@ -62,6 +62,12 @@ def test_audit_refuses_a_path_outside_sample_tasks(tmp_path: Path) -> None:
     assert "Traceback" not in text
 
 
+def test_audit_command_stays_validation_only() -> None:
+    source = (REPO / "auditor" / "cli.py").read_text(encoding="utf-8")
+    assert "auditor.checks" not in source
+    assert "run_static_checks" not in source
+
+
 def _combined(result: Result) -> str:
     if result.stderr in result.output:
         return result.output
