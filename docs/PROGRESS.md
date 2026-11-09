@@ -1721,3 +1721,98 @@ Decisions and open questions:
 
 Next stage:
 Stage 11: fresh-clone audit from the README. Waiting for "next".
+
+## Stage 11: fresh-clone audit (commit 20c71cce12cdd2646adca0a325f9685df6a34c54)
+What was built:
+The repository was cloned to `/Users/shubhambaviskar/Desktop/task-auditor-fresh` and the README was followed there. `python3.11 -m venv .venv` failed. The README now uses `uv venv` and `uv pip install`, names the `typecheck` and `build` scripts, and lists ruff, mypy, and pytest. Those fixed steps were run in the clone.
+
+The audit warning said later stages run task code. This command runs it. The sentence is now `warning: this command runs task code and is not a security sandbox`. The CLI tests that looked for the old sentence were updated. Checks 1 to 11 were not changed. `sample_tasks`, `held_out_tasks`, and both evaluation tables were not edited.
+
+`git ls-files` in the clone, after the virtualenv, `reports/`, and `frontend/node_modules` existed on disk, tracks none of those and no database or secret file.
+
+Commands run and their real output:
+```
+python3.11 -m venv .venv
+Error: Command '['/Users/shubhambaviskar/Desktop/task-auditor-fresh/.venv/bin/python3.11', '-m', 'ensurepip', '--upgrade', '--default-pip']' returned non-zero exit status 1.
+
+.venv/bin/python3.11 -m ensurepip --upgrade --default-pip
+Could not find platform independent libraries <prefix>
+Could not find platform dependent libraries <exec_prefix>
+...
+stdlib dir = '/install/lib/python3.11'
+sys.base_prefix = '/install'
+Fatal Python error: init_fs_encoding: failed to get the Python codec of the filesystem encoding
+ModuleNotFoundError: No module named 'encodings'
+
+uv venv --python 3.11 .venv
+Using CPython 3.11.14
+Creating virtual environment at: .venv
+
+uv pip install --python .venv/bin/python -e ".[dev]"
+Installed 36 packages in 52ms
+
+.venv/bin/auditor audit sample_tasks/slugify --out reports
+warning: this command runs task code and is not a security sandbox
+id: slugify
+title: Turn a phrase into a URL slug
+requirements: 2
+requirement_coverage: 1.000
+mutation_score: 1.000
+findings: 0
+json: reports/slugify.json
+markdown: reports/slugify.md
+
+.venv/bin/ruff check .
+All checks passed!
+
+.venv/bin/ruff format --check .
+314 files already formatted
+
+.venv/bin/mypy
+Success: no issues found in 41 source files
+
+.venv/bin/pytest -q
+........................................................................ [ 64%]
+.......................................                                  [100%]
+111 passed in 67.96s (0:01:07)
+
+npm run typecheck && npm run build
+> typecheck
+> tsc --noEmit
+
+> build
+> tsc --noEmit && vite build
+
+vite v6.4.6 building for production...
+transforming...
+✓ 29 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.40 kB │ gzip:  0.27 kB
+dist/assets/index-CqjeQbxl.css    1.52 kB │ gzip:  0.67 kB
+dist/assets/index-CUucqIJ5.js   226.74 kB │ gzip: 70.48 kB
+✓ built in 452ms
+
+git ls-files | rg -n '\.venv|node_modules|auditor\.sqlite|\.sqlite|\.sqlite3|\.db$|reports/|\.env$|credentials|id_rsa|\.pem$|\.key$|secret' || echo "no tracked venv, modules, database, reports, or secret names"
+no tracked venv, modules, database, reports, or secret names
+```
+
+`git ls-files` lists 432 paths. Their extensions are py, yaml, md, json, tsx, yml, ts, toml, html, gitkeep, gitignore, and css. A second search for secret, token, password, credential, sqlite, and database names also found none. Nothing was removed from the index.
+
+`npm ci` printed a warning that esbuild and fsevents install scripts are not covered by the local `allowScripts` setting. The typecheck and the build still completed.
+
+Bugs found and fixed:
+- `python3.11 -m venv` created an environment whose prefix is `/install`, so `ensurepip` died before pip existed. The README now installs with uv.
+- The README did not say how to run the tests, the typecheck, or the frontend build. Those commands are now in the README.
+- The warning still said later stages run task code. It now says this command runs task code.
+
+Files changed:
+`README.md`, `auditor/cli.py`, `tests/test_cli.py`.
+
+Decisions and open questions:
+- The clone is `/Users/shubhambaviskar/Desktop/task-auditor-fresh`. Its `.venv`, `reports/`, and `frontend/node_modules` stayed untracked.
+- The warning change is the CLI sentence only. The check functions are the same.
+- v1 is still a same-author score, and the held-out table was not tuned.
+
+Next stage:
+None. This was the last stage.
