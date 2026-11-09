@@ -66,6 +66,8 @@ def test_audit_command_stays_validation_only() -> None:
     source = (REPO / "auditor" / "cli.py").read_text(encoding="utf-8")
     assert "auditor.checks" not in source
     assert "run_static_checks" not in source
+    assert "run_coverage_checks" not in source
+    assert "requirement_coverage" not in source
 
 
 def _combined(result: Result) -> str:

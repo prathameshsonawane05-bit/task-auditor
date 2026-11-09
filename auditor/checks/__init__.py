@@ -1,6 +1,11 @@
-"""Registered static checks. The audit command does not run these."""
+"""Registered checks. The audit command does not run these."""
 
 from auditor.checks.brittle_format import run_brittle_format
+from auditor.checks.coverage import (
+    requirement_coverage,
+    run_hidden_requirement,
+    run_untested_requirement,
+)
 from auditor.checks.hardcoded import run_hardcoded_solution
 from auditor.checks.model import Finding, Rule, Severity, Snippet, StaticTarget
 from auditor.checks.nondeterministic import run_nondeterministic_test
@@ -16,6 +21,11 @@ CHECKS: tuple[Rule, ...] = (
     Rule("nondeterministic_test", Severity.LOW, run_nondeterministic_test),
 )
 
+COVERAGE_CHECKS: tuple[Rule, ...] = (
+    Rule("untested_requirement", Severity.HIGH, run_untested_requirement),
+    Rule("hidden_requirement", Severity.MEDIUM, run_hidden_requirement),
+)
+
 
 def run_static_checks(target: StaticTarget) -> list[Finding]:
     """Run checks 1 to 5. This does not execute the task's pytest file."""
@@ -25,13 +35,24 @@ def run_static_checks(target: StaticTarget) -> list[Finding]:
     return findings
 
 
+def run_coverage_checks(target: StaticTarget) -> list[Finding]:
+    """Run checks 6 and 7. This does not import or run the task tests."""
+    findings: list[Finding] = []
+    for rule in COVERAGE_CHECKS:
+        findings.extend(rule.run(target))
+    return findings
+
+
 __all__ = [
     "CHECKS",
+    "COVERAGE_CHECKS",
     "Finding",
     "Rule",
     "Severity",
     "Snippet",
     "StaticTarget",
+    "requirement_coverage",
+    "run_coverage_checks",
     "run_static_checks",
     "target_from_task",
 ]

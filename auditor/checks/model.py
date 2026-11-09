@@ -10,11 +10,12 @@ from pydantic import BaseModel, ConfigDict, Field
 class Severity(StrEnum):
     """How a finding weakens the verifier.
 
-    high: the test reads solution source, or the reference solution matches
-    a test by returning literals. The task can pass without the behavior
-    the instruction describes.
-    medium: the assertion is too weak to reject a wrong solution, or it
-    demands an exact string the instruction never gives.
+    high: the test reads solution source, the reference solution matches a
+    test by returning literals, or a requirement id has no @covers marker.
+    The task can pass without the behavior the instruction describes.
+    medium: the assertion is too weak to reject a wrong solution, it
+    demands an exact string the instruction never gives, or a test checks
+    an id or error message the task does not publish.
     low: the test can change result without a change to the solution.
     """
 
@@ -49,6 +50,7 @@ class StaticTarget:
     tests: tuple[Snippet, ...]
     solution: Snippet | None = None
     instruction: str = ""
+    requirements: tuple[str, ...] = ()
 
 
 CheckFn = Callable[[StaticTarget], list[Finding]]

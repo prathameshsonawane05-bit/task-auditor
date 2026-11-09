@@ -8,6 +8,7 @@ def snippet_target(
     *,
     solution: str | None = None,
     instruction: str = "",
+    requirements: tuple[str, ...] = (),
     test_label: str = "tests/test_snippet.py",
     solution_label: str = "solution/solution.py",
 ) -> StaticTarget:
@@ -18,6 +19,7 @@ def snippet_target(
         tests=(Snippet(test_label, test_source),),
         solution=solution_snippet,
         instruction=instruction,
+        requirements=requirements,
     )
 
 
