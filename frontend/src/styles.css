@@ -1,0 +1,137 @@
+:root {
+  color: #241c14;
+  background: #f3ead7;
+  font-family: "Iowan Old Style", Palatino, "Palatino Linotype", Georgia, serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 4rem;
+}
+
+header {
+  border-bottom: 2px solid #241c14;
+  margin-bottom: 1.5rem;
+}
+
+.eyebrow {
+  margin: 0;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  font-size: 0.75rem;
+}
+
+h1 {
+  margin: 0.2rem 0 0.8rem;
+  font-size: 2.4rem;
+  font-weight: 600;
+}
+
+h2 {
+  margin-top: 0;
+  font-size: 1.3rem;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(16rem, 22rem) 1fr;
+  gap: 1.5rem;
+}
+
+.task-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.task-list button {
+  width: 100%;
+  margin-bottom: 0.6rem;
+  padding: 0.75rem 0.8rem;
+  text-align: left;
+  color: inherit;
+  background: #fffaf1;
+  border: 1px solid #241c14;
+  font: inherit;
+  cursor: pointer;
+}
+
+.task-list button[aria-pressed="true"] {
+  background: #241c14;
+  color: #f3ead7;
+}
+
+.task-id,
+.task-title,
+.task-count {
+  display: block;
+}
+
+.task-id {
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  font-size: 0.8rem;
+}
+
+.task-count {
+  margin-top: 0.35rem;
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  font-size: 0.8rem;
+}
+
+.detail,
+.empty {
+  background: #fffaf1;
+  border: 1px solid #241c14;
+  padding: 1rem 1.1rem;
+}
+
+.empty {
+  border-style: dashed;
+}
+
+.meta,
+.finding-location {
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  font-size: 0.85rem;
+}
+
+.findings {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.findings li {
+  margin-top: 0.8rem;
+  padding-left: 0.8rem;
+  border-left: 4px solid #9a3412;
+}
+
+.finding-check {
+  margin-bottom: 0.2rem;
+  font-weight: 700;
+}
+
+.none {
+  margin-bottom: 0;
+}
+
+.error {
+  color: #9a3412;
+}
+
+@media (max-width: 720px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}

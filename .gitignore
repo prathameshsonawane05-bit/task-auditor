@@ -10,3 +10,10 @@ dist/
 build/
 .coverage
 htmlcov/
+auditor.sqlite
+*.sqlite
+*.sqlite3
+*.db
+reports/
+frontend/node_modules/
+frontend/dist/

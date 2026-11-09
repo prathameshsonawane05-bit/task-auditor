@@ -1,4 +1,4 @@
-"""Registered checks. The audit command does not run these."""
+"""Registered checks. auditor.run calls these. The rules themselves are unchanged."""
 
 from auditor.checks.brittle_format import run_brittle_format
 from auditor.checks.coverage import (

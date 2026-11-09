@@ -45,7 +45,7 @@ class Snippet:
 
 @dataclass(frozen=True, slots=True)
 class StaticTarget:
-    """Snippets a static check can see. The CLI does not build this."""
+    """Snippets a static check can see. auditor.run builds this from the task."""
 
     tests: tuple[Snippet, ...]
     solution: Snippet | None = None

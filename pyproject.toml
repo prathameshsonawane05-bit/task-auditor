@@ -4,13 +4,16 @@ version = "0.1.0"
 description = "Audit invented coding tasks for weak verifiers."
 requires-python = ">=3.11"
 dependencies = [
+    "fastapi>=0.115",
     "pydantic>=2",
     "pyyaml>=6",
     "typer>=0.12",
+    "uvicorn>=0.32",
 ]
 
 [project.optional-dependencies]
 dev = [
+    "httpx2>=2",
     "mypy>=1.11",
     "pytest>=8",
     "ruff>=0.6",
