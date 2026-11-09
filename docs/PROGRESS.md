@@ -380,3 +380,171 @@ Decisions and open questions:
 
 Next stage:
 Stage 4: dynamic checks 8 to 10, in a subprocess with a timeout, a temp directory, and no network. Waiting for "next".
+
+## Stage 4: dynamic checks 8 to 10 (commit c065cc10e2414a585da2ea8a792f95ab4c125091)
+What was built:
+`solution_fails_tests`, `cheat_solution_passes`, and `flaky_tests`, registered as `DYNAMIC_CHECKS`. Task code runs only in a child process, in a temp directory, with a 2 second timeout. The auditor process does not import the task. Files are copied. `sample_tasks` is not modified. Checks 1 to 7 were not modified, and their registries are unchanged. `auditor audit` still only validates a task folder. The existing sandbox warning is unchanged.
+
+Copy rule: each top-level `environment/*.py` module, other than `__init__.py`, is replaced in the temp directory by `solution/solution.py` under that same file name. `tests/` is copied to the temp root. For slugify, `from slugify import slugify` loads the reference solution, not the starter that raises `NotImplementedError`.
+
+The tests were written by the same author as the checks. Passing them is weak evidence.
+
+Commands run and their real output:
+```
+.venv/bin/ruff check .
+All checks passed!
+
+.venv/bin/ruff format --check .
+40 files already formatted
+
+.venv/bin/mypy
+Success: no issues found in 31 source files
+
+.venv/bin/pytest -v
+============================= test session starts ==============================
+platform darwin -- Python 3.11.14, pytest-9.2.0, pluggy-1.7.0 -- /Users/shubhambaviskar/Desktop/Eval Task Auditor/.venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /Users/shubhambaviskar/Desktop/Eval Task Auditor
+configfile: pyproject.toml
+testpaths: tests
+collecting ... collected 89 items
+
+tests/test_brittle_format.py::test_cutoff_is_40_characters PASSED        [  1%]
+tests/test_brittle_format.py::test_long_string_equality_without_a_specified_format_is_flagged PASSED [  2%]
+tests/test_brittle_format.py::test_numeric_equality_is_not_flagged PASSED [  3%]
+tests/test_brittle_format.py::test_same_literal_is_not_flagged_when_the_instruction_specifies_it PASSED [  4%]
+tests/test_brittle_format.py::test_short_string_equality_is_not_flagged PASSED [  5%]
+tests/test_cli.py::test_audit_prints_id_title_count_and_sandbox_warning PASSED [  6%]
+tests/test_cli.py::test_audit_prints_validation_error_and_exits_nonzero PASSED [  7%]
+tests/test_cli.py::test_audit_refuses_a_path_outside_sample_tasks PASSED [  8%]
+tests/test_cli.py::test_audit_command_stays_validation_only PASSED       [ 10%]
+tests/test_coverage.py::test_coverage_checks_are_registered PASSED       [ 11%]
+tests/test_coverage.py::test_untested_requirement_names_the_missing_id PASSED [ 12%]
+tests/test_coverage.py::test_covered_requirements_are_not_flagged_as_untested PASSED [ 13%]
+tests/test_coverage.py::test_two_decorators_on_one_test_cover_both_ids PASSED [ 14%]
+tests/test_coverage.py::test_alias_of_covers_is_not_recognized PASSED    [ 15%]
+tests/test_coverage.py::test_test_without_covers_is_hidden PASSED        [ 16%]
+tests/test_coverage.py::test_unknown_covers_id_is_hidden PASSED          [ 17%]
+tests/test_coverage.py::test_ordinary_equality_is_not_a_hidden_error PASSED [ 19%]
+tests/test_coverage.py::test_pytest_raises_match_absent_from_the_instruction_is_flagged PASSED [ 20%]
+tests/test_coverage.py::test_same_error_message_is_not_flagged_when_the_instruction_contains_it PASSED [ 21%]
+tests/test_coverage.py::test_exception_string_equality_absent_from_the_instruction_is_flagged PASSED [ 22%]
+tests/test_coverage.py::test_coverage_is_zero_one_and_two_of_two PASSED  [ 23%]
+tests/test_coverage.py::test_zero_requirements_uses_zero PASSED          [ 24%]
+tests/test_coverage.py::test_slugify_sample_covers_both_requirements PASSED [ 25%]
+tests/test_coverage.py::test_static_runner_does_not_run_coverage_checks PASSED [ 26%]
+tests/test_coverage.py::test_coverage_module_does_not_import_or_run_tests PASSED [ 28%]
+tests/test_dynamic.py::test_dynamic_checks_are_registered PASSED         [ 29%]
+tests/test_dynamic.py::test_slugify_imports_the_reference_solution PASSED [ 30%]
+tests/test_dynamic.py::test_slugify_has_no_dynamic_findings PASSED       [ 31%]
+tests/test_dynamic.py::test_wrong_solution_is_flagged_and_a_consistent_failure_is_not_flaky PASSED [ 32%]
+tests/test_dynamic.py::test_first_argument_cheat_passes_and_the_others_do_not PASSED [ 33%]
+tests/test_dynamic.py::test_counter_file_forces_a_flaky_result PASSED    [ 34%]
+tests/test_dynamic.py::test_hanging_child_returns_within_the_timeout PASSED [ 35%]
+tests/test_dynamic.py::test_child_cannot_open_a_tcp_socket PASSED        [ 37%]
+tests/test_hardcoded_solution.py::test_literal_return_is_confirmed_on_a_perturbed_input PASSED [ 38%]
+tests/test_hardcoded_solution.py::test_computed_return_is_not_flagged PASSED [ 39%]
+tests/test_hardcoded_solution.py::test_if_chain_on_literals_is_flagged_when_perturbation_changes PASSED [ 40%]
+tests/test_hardcoded_solution.py::test_literal_return_with_no_arguments_is_flagged PASSED [ 41%]
+tests/test_hardcoded_solution.py::test_subprocess_timeout_does_not_flag PASSED [ 42%]
+tests/test_loader.py::test_valid_folder_loads_id_title_and_requirement_count PASSED [ 43%]
+tests/test_loader.py::test_real_sample_task_loads_from_another_working_directory PASSED [ 44%]
+tests/test_loader.py::test_missing_file_or_directory_names_the_path[task.yaml-task.yaml-required file is missing] PASSED [ 46%]
+tests/test_loader.py::test_missing_file_or_directory_names_the_path[instruction.md-instruction.md-required file is missing] PASSED [ 47%]
+tests/test_loader.py::test_missing_file_or_directory_names_the_path[solution/solution.py-solution/solution.py-required file is missing] PASSED [ 48%]
+tests/test_loader.py::test_missing_file_or_directory_names_the_path[environment-environment-required directory is missing] PASSED [ 49%]
+tests/test_loader.py::test_missing_file_or_directory_names_the_path[tests-tests-required directory is missing] PASSED [ 50%]
+tests/test_loader.py::test_environment_file_is_rejected PASSED           [ 51%]
+tests/test_loader.py::test_missing_pytest_file_names_the_pattern PASSED  [ 52%]
+tests/test_loader.py::test_missing_field_names_the_field PASSED          [ 53%]
+tests/test_loader.py::test_wrong_field_type_names_the_value PASSED       [ 55%]
+tests/test_loader.py::test_unknown_field_names_the_value PASSED          [ 56%]
+tests/test_loader.py::test_non_python_language_names_the_value PASSED    [ 57%]
+tests/test_loader.py::test_empty_requirements_names_the_value PASSED     [ 58%]
+tests/test_loader.py::test_duplicate_requirement_id_names_the_later_value PASSED [ 59%]
+tests/test_loader.py::test_task_id_must_match_folder_name PASSED         [ 60%]
+tests/test_loader.py::test_path_outside_sample_tasks_names_the_path PASSED [ 61%]
+tests/test_loader.py::test_symlink_that_escapes_sample_tasks_is_refused PASSED [ 62%]
+tests/test_loader.py::test_nested_path_inside_sample_tasks_is_refused PASSED [ 64%]
+tests/test_loader.py::test_task_yaml_must_be_a_mapping PASSED            [ 65%]
+tests/test_loader.py::test_invalid_yaml_names_the_parser_error PASSED    [ 66%]
+tests/test_nondeterministic.py::test_nondeterministic_uses_are_flagged[import random\n\ndef test_roll() -> None:\n    assert random.random() >= 0\n-random.random] PASSED [ 67%]
+tests/test_nondeterministic.py::test_nondeterministic_uses_are_flagged[import random\n\ndef test_imports_random() -> None:\n    assert True\n-imports random] PASSED [ 68%]
+tests/test_nondeterministic.py::test_nondeterministic_uses_are_flagged[import time\n\ndef test_wait() -> None:\n    time.sleep(0)\n    assert True\n-time.sleep] PASSED [ 69%]
+tests/test_nondeterministic.py::test_nondeterministic_uses_are_flagged[import time\n\ndef test_clock() -> None:\n    assert time.time() > 0\n-time.time] PASSED [ 70%]
+tests/test_nondeterministic.py::test_nondeterministic_uses_are_flagged[import datetime\n\ndef test_year() -> None:\n    assert datetime.datetime.now().year > 2000\n-datetime.datetime.now] PASSED [ 71%]
+tests/test_nondeterministic.py::test_nondeterministic_uses_are_flagged[import requests\n\ndef test_marker() -> None:\n    assert True\n-requests] PASSED [ 73%]
+tests/test_nondeterministic.py::test_nondeterministic_uses_are_flagged[import socket\n\ndef test_open_socket() -> None:\n    assert socket.socket() is not None\n-socket] PASSED [ 74%]
+tests/test_nondeterministic.py::test_nondeterministic_uses_are_flagged[import asyncio\n\ndef test_pause() -> None:\n    asyncio.sleep(0)\n-asyncio.sleep] PASSED [ 75%]
+tests/test_nondeterministic.py::test_seeded_or_deterministic_code_is_not_flagged[def test_add() -> None:\n    assert 1 + 1 == 2\n] PASSED [ 76%]
+tests/test_nondeterministic.py::test_seeded_or_deterministic_code_is_not_flagged[import random\n\ndef test_roll() -> None:\n    random.seed(1)\n    assert random.random() >= 0\n] PASSED [ 77%]
+tests/test_nondeterministic.py::test_seeded_or_deterministic_code_is_not_flagged[import time\n\ndef test_year() -> None:\n    assert time.strftime("%Y", time.gmtime(0)) == "1970"\n] PASSED [ 78%]
+tests/test_nondeterministic.py::test_random_instance_constructed_with_a_seed_is_not_flagged PASSED [ 79%]
+tests/test_nondeterministic.py::test_later_unseeded_random_replaces_an_earlier_seed PASSED [ 80%]
+tests/test_nondeterministic.py::test_fixture_that_freezes_time_is_not_flagged PASSED [ 82%]
+tests/test_nondeterministic.py::test_unrelated_fixture_does_not_hide_datetime_now PASSED [ 83%]
+tests/test_source_inspection.py::test_open_parse_and_membership_on_the_solution_are_flagged PASSED [ 84%]
+tests/test_source_inspection.py::test_open_of_a_non_solution_path_is_ignored PASSED [ 85%]
+tests/test_source_inspection.py::test_reassigned_path_is_not_treated_as_the_solution PASSED [ 86%]
+tests/test_source_inspection.py::test_aliased_inspect_getsource_is_flagged PASSED [ 87%]
+tests/test_static_checks.py::test_static_checks_are_registered PASSED    [ 88%]
+tests/test_static_checks.py::test_run_static_checks_invokes_the_registry PASSED [ 89%]
+tests/test_static_checks.py::test_slugify_sample_has_no_static_findings PASSED [ 91%]
+tests/test_weak_assertion.py::test_weak_patterns_are_flagged[def test_calls() -> None:\n    build()\n-does not contain an assert] PASSED [ 92%]
+tests/test_weak_assertion.py::test_weak_patterns_are_flagged[def test_always() -> None:\n    assert True\n-assert True] PASSED [ 93%]
+tests/test_weak_assertion.py::test_weak_patterns_are_flagged[def test_present() -> None:\n    assert build() is not None\n-is not None] PASSED [ 94%]
+tests/test_weak_assertion.py::test_weak_patterns_are_flagged[def test_kind() -> None:\n    assert isinstance(build(), int)\n-isinstance] PASSED [ 95%]
+tests/test_weak_assertion.py::test_weak_patterns_are_flagged[def test_swallows() -> None:\n    try:\n        build()\n    except Exception:\n        pass\n-only passes] PASSED [ 96%]
+tests/test_weak_assertion.py::test_real_equality_assert_is_not_flagged PASSED [ 97%]
+tests/test_weak_assertion.py::test_real_assert_beside_assert_true_is_not_flagged PASSED [ 98%]
+tests/test_weak_assertion.py::test_reraise_is_not_flagged PASSED         [100%]
+
+============================== 89 passed in 6.54s ==============================
+```
+
+`run_dynamic_checks` on `sample_tasks/slugify`:
+
+```
+no dynamic findings
+```
+
+`run_dynamic_checks` on an invented temp task whose solution returns `"no"` while the test expects `echo("hi") == "HI"`. The folder was not under `sample_tasks` and was deleted afterward.
+
+```
+solution_fails_tests [high] solution/solution.py
+Reference solution failed its tests with pytest exit code 1.
+```
+
+`auditor audit sample_tasks/slugify` (exit 0):
+
+```
+warning: later stages run task code and this is not a security sandbox
+id: slugify
+title: Turn a phrase into a URL slug
+requirements: 2
+```
+
+`auditor audit /tmp` (exit 1):
+
+```
+warning: later stages run task code and this is not a security sandbox
+error: path: must be inside sample_tasks (value: '/private/tmp')
+```
+
+Bugs found and fixed:
+- The first wrong-solution fixture expected `echo("hi") == "hi"` while the reference returned `"no"`. `solution_fails_tests` fired, and the first-argument cheat also passed, because the tests accepted the input unchanged. The fixture now expects `"HI"`, which none of the four cheats produce. A consistent failure is only `solution_fails_tests`.
+- A module with no function would have been unparsed and run again. If the tests passed, every cheat would have been flagged even though no body changed. A cheat that rewrites nothing is skipped.
+
+Files changed:
+`auditor/checks/__init__.py`, `auditor/checks/dynamic.py`, `tests/test_cli.py`, `tests/test_dynamic.py`.
+
+Decisions and open questions:
+- Each child is limited to `DYNAMIC_TIMEOUT_SECONDS`, which is 2 seconds. `subprocess.run` kills the child when that expires, and the call returns. A hang test with the limit patched to 0.5 seconds returned in under 5 seconds. A correct suite that needs longer than 2 seconds is reported as not passing.
+- `solution_fails_tests` and `cheat_solution_passes` are high. `flaky_tests` is low, because the pass/fail result changed without a solution change. Flaky runs the suite 3 times in one temp directory. The unit test forces the difference with a counter file (`passed, failed, failed`). It does not use a random chance.
+- The cheats are return None, return 0, an empty function body, and return the first argument. They rewrite module-level functions only. Class methods and lambdas are not rewritten. A function with no positional parameter uses `return None` for the first-argument cheat. A cheat that times out or errors did not pass, so it is not flagged. slugify flags none of them. A separate invented echo task flags only the first-argument cheat.
+- Network block: before pytest starts, the child replaces `socket.socket` so the default family, `AF_INET`, and `AF_INET6` raise `OSError("network access is blocked")`. `connect`, `connect_ex`, and `socket.create_connection` raise the same error. A test listens on `127.0.0.1` and the child cannot connect. This is not a security sandbox. The block still allows `AF_UNIX` sockets, local files, a subprocess (the patch is not inherited), ctypes and other direct system calls, and task code that restores or reloads `socket.socket`. The CLI warning stays: later stages run task code and this is not a security sandbox.
+- The child environment copies `PATH` and sets `PYTHONDONTWRITEBYTECODE`. Other parent variables are not copied. A `pytest.ini` in the temp directory keeps pytest from using this project's config.
+- These tests, and the clean slugify result, were written by the same author as the checks. That is weak evidence about precision and recall.
+
+Next stage:
+Stage 5: mutation testing, check 11, with a fixed seed. Waiting for "next".
