@@ -1,0 +1,6 @@
+id: scale
+title: Multiply an integer by ten
+language: python
+requirements:
+  - id: R1
+    text: Return the integer multiplied by ten, including zero and negatives.

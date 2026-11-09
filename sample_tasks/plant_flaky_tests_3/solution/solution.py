@@ -1,0 +1,2 @@
+def triple(n: int) -> int:
+    return n * 3

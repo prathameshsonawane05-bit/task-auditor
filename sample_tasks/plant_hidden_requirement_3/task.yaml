@@ -1,0 +1,6 @@
+id: plant_hidden_requirement_3
+title: Reject a code
+language: python
+requirements:
+  - id: R1
+    text: Follow the behavior the tests describe.

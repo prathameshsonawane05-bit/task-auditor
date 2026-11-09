@@ -1,0 +1,6 @@
+id: both_positive
+title: Tell whether both integers are positive
+language: python
+requirements:
+  - id: R1
+    text: Return true only when both integers are greater than zero.

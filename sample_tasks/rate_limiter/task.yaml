@@ -1,0 +1,8 @@
+id: rate_limiter
+title: Allow a fixed number of calls
+language: python
+requirements:
+  - id: R1
+    text: Allow a call while the number already used is below the limit, then count that call.
+  - id: R2
+    text: Reject a call when the limit is already used up, including a limit of zero.

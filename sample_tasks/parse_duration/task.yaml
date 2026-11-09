@@ -1,0 +1,8 @@
+id: parse_duration
+title: Parse a compact duration
+language: python
+requirements:
+  - id: R1
+    text: Add hours, minutes, and seconds into a total number of seconds.
+  - id: R2
+    text: Raise ValueError with the message bad duration when a unit has no number or the unit is unknown.

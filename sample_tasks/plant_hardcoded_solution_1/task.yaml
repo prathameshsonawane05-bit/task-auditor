@@ -1,0 +1,6 @@
+id: plant_hardcoded_solution_1
+title: Return a literal for every input
+language: python
+requirements:
+  - id: R1
+    text: Follow the behavior the tests describe.

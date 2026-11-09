@@ -1,0 +1,8 @@
+id: merge_intervals
+title: Merge overlapping intervals
+language: python
+requirements:
+  - id: R1
+    text: Sort the intervals and merge each pair that overlaps or touches.
+  - id: R2
+    text: Leave a gap when the next interval starts after the previous end.

@@ -1,0 +1,6 @@
+id: double
+title: Double an integer
+language: python
+requirements:
+  - id: R1
+    text: Return the integer multiplied by two, including zero and negatives.

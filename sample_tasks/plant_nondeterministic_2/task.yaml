@@ -1,0 +1,6 @@
+id: plant_nondeterministic_2
+title: Double an integer, but the test calls random
+language: python
+requirements:
+  - id: R1
+    text: Follow the behavior the tests describe.

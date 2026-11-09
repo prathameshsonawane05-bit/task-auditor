@@ -1,0 +1,8 @@
+id: plant_untested_requirement_1
+title: Double an integer
+language: python
+requirements:
+  - id: R1
+    text: Return the integer multiplied by two.
+  - id: R2
+    text: Also reject a negative result.
