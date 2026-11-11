@@ -1816,3 +1816,85 @@ Decisions and open questions:
 
 Next stage:
 None. This was the last stage.
+
+## Improvement 1: baseline lock and CI (commit 85490ab39d2c80bfadec42b77bba93552d7405b2)
+What was built:
+`uv.lock` pins the packages in `pyproject.toml`, including the `dev` extra (`httpx2`, `mypy`, `pytest`, `ruff`, and `types-pyyaml`). The lockfile is tracked. `.github/workflows/checks.yml` installs Python 3.11, installs uv 0.9.5, then runs `uv sync --frozen --extra dev --python 3.11`. The workflow still runs ruff, ruff format, mypy, pytest, `npm ci`, `tsc --noEmit`, and `vite build`. Permissions stay `contents: read`. No secrets are used.
+
+Checks 1 to 11, the task folders, the evaluation tables, the API, the React page, and the CLI warning were not changed.
+
+Commands run and their real output:
+```
+uv lock --check
+Resolved 38 packages in 28ms
+
+uv sync --frozen --extra dev --python 3.11
+Resolved 38 packages in 40ms
+   Building task-auditor @ file:///Users/shubhambaviskar/Desktop/Eval%20Task%20Auditor
+      Built task-auditor @ file:///Users/shubhambaviskar/Desktop/Eval%20Task%20Auditor
+Prepared 6 packages in 618ms
+Uninstalled 9 packages in 47ms
+Installed 6 packages in 4ms
+ - annotated-doc==0.0.5
+ + annotated-doc==0.0.6
+ - certifi==2026.10.23
+ - fastapi==0.162.2
+ + fastapi==0.162.4
+ - httpcore==1.0.9
+ - httpx==0.28.1
+ - markdown-it-py==4.2.0
+ + markdown-it-py==4.3.0
+ ~ task-auditor==0.1.0 (from file:///Users/shubhambaviskar/Desktop/Eval%20Task%20Auditor)
+ - typer==0.28.0
+ + typer==0.29.1
+ - types-pyyaml==6.0.12.20261103
+ + types-pyyaml==6.0.12.20261111
+
+.venv/bin/ruff check .
+All checks passed!
+
+.venv/bin/ruff format --check .
+314 files already formatted
+
+.venv/bin/mypy
+Success: no issues found in 41 source files
+
+.venv/bin/pytest -q
+........................................................................ [ 64%]
+.......................................                                  [100%]
+111 passed in 67.63s (0:01:07)
+
+npm run typecheck && npm run build
+> typecheck
+> tsc --noEmit
+
+> build
+> tsc --noEmit && vite build
+
+vite v6.4.6 building for production...
+transforming...
+✓ 29 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.40 kB │ gzip:  0.27 kB
+dist/assets/index-CqjeQbxl.css    1.52 kB │ gzip:  0.67 kB
+dist/assets/index-CUucqIJ5.js   226.74 kB │ gzip: 70.48 kB
+✓ built in 456ms
+```
+
+The first `uv lock --check` ran in the same command as the frozen sync and also exited 0. The standalone check above was run after that sync.
+
+Bugs found and fixed:
+None. The frozen sync removed packages that were not in the lock. The suite still passed, so no check or test was changed.
+
+Files changed:
+`uv.lock`, `.github/workflows/checks.yml`.
+
+Decisions and open questions:
+- The lock is `uv.lock`, written by uv 0.9.5. CI installs that same uv version, then syncs with `--frozen` and `--extra dev`.
+- `uv lock` already records optional extras, so the dev extra is in the lock without a separate dependency group.
+- The README still shows `uv pip install`. CI is the path that refuses an unlocked resolution.
+- The frontend `package-lock.json` was left as it was. `npm ci` was not required for this change, and the frontend build used the existing install.
+
+Next stage:
+Waiting for "next".
