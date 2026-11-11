@@ -2064,3 +2064,69 @@ Decisions and open questions:
 
 Next stage:
 Waiting for "next".
+
+## Improvement 5: stored reports and local API (commit e7aade3f9ba2b927c359b0ae84289b5871f63cff)
+What was built:
+SQLite now saves `mutation_timed_out` and returns that stored value. A database created with the old table still opens. The missing column is added with `ALTER TABLE`, and the existing rows stay. An old slugify row reads back as timeout count 0.
+
+`POST /api/tasks` rejects a report whose requirement coverage or mutation score is below 0, above 1, NaN, or infinite. It rejects a severity other than high, medium, or low. It rejects more than 100 findings, a requirements count above 100, and an id, title, check, location, or explanation longer than 1000 characters. The slugify report and the planted weak-assertion report still store. A client whose host is not `127.0.0.1` or `::1` gets 403. There are no accounts. The server is still bound to `127.0.0.1`.
+
+The task detail panel shows the timeout count. Frontend tests cover the heading "No tasks stored", the line "Loading findings.", and one stored finding with its check, severity, location, explanation, and timeout count. `npm test` runs those tests. The GitHub workflow runs it after `npm ci`.
+
+Commands run and their real output:
+```
+.venv/bin/ruff check .
+All checks passed!
+
+.venv/bin/ruff format --check .
+318 files already formatted
+
+.venv/bin/mypy
+Success: no issues found in 45 source files
+
+.venv/bin/pytest -q
+........................................................................ [ 59%]
+..................................................                       [100%]
+122 passed in 95.95s (0:01:35)
+
+npm test && npm run typecheck && npm run build
+> test
+> vitest run
+
+ RUN  v5.1.0 /Users/shubhambaviskar/Desktop/Eval Task Auditor/frontend
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  19:30:21
+   Duration  964ms (environment 76%, import 13%, tests 9%, transform 2%)
+
+> typecheck
+> tsc --noEmit
+
+> build
+> tsc --noEmit && vite build
+
+vite v6.4.6 building for production...
+transforming...
+✓ 29 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.40 kB │ gzip:  0.27 kB
+dist/assets/index-CqjeQbxl.css    1.52 kB │ gzip:  0.67 kB
+dist/assets/index-D_ic4bW4.js   226.78 kB │ gzip: 70.49 kB
+✓ built in 464ms
+```
+
+Bugs found and fixed:
+The test client refuses to encode NaN and infinity, so those two cases are posted as raw JSON. The API still rejects them with 422.
+
+Files changed:
+`auditor/store.py`, `auditor/api.py`, `tests/test_api.py`, `frontend/src/App.tsx`, `frontend/src/App.test.tsx`, `frontend/package.json`, `frontend/package-lock.json`, `frontend/vite.config.ts`, `.github/workflows/checks.yml`.
+
+Decisions and open questions:
+- A refused client gets 403 and the detail `local clients only`. `::1` is accepted.
+- Exactly 100 findings, a requirements count of 100, and text of 1000 characters still store. 101 and 1001 do not.
+- The page was checked in the browser on `127.0.0.1`. The planted task showed `timed out 1` with the weak-assertion finding. Slugify showed `timed out 0` and "No findings."
+
+Next stage:
+Waiting for "next".
