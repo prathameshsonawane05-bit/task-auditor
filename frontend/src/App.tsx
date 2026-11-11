@@ -22,6 +22,7 @@ type TaskDetail = {
   requirements: number;
   requirement_coverage: number;
   mutation_score: number;
+  mutation_timed_out: number;
   findings: Finding[];
 };
 
@@ -156,7 +157,7 @@ function TaskPanel({
       <p className="meta">
         {detail.id} · requirements {detail.requirements} · coverage{" "}
         {detail.requirement_coverage.toFixed(3)} · mutation{" "}
-        {detail.mutation_score.toFixed(3)}
+        {detail.mutation_score.toFixed(3)} · timed out {detail.mutation_timed_out}
       </p>
       {detail.findings.length === 0 ? (
         <p className="none">No findings.</p>

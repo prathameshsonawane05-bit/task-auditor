@@ -48,6 +48,10 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      - name: Test the dashboard
+        working-directory: frontend
+        run: npm test
+
       - name: Typecheck the dashboard
         working-directory: frontend
         run: npx tsc --noEmit

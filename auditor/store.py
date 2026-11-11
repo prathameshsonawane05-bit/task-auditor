@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS audits (
     requirements INTEGER NOT NULL,
     requirement_coverage REAL NOT NULL,
     mutation_score REAL NOT NULL,
+    mutation_timed_out INTEGER NOT NULL DEFAULT 0,
     findings_json TEXT NOT NULL
 )
 """
@@ -37,13 +38,14 @@ def save_report(database: Path, report: AuditReport) -> None:
             """
             INSERT INTO audits (
                 task_id, title, requirements, requirement_coverage,
-                mutation_score, findings_json
-            ) VALUES (?, ?, ?, ?, ?, ?)
+                mutation_score, mutation_timed_out, findings_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(task_id) DO UPDATE SET
                 title = excluded.title,
                 requirements = excluded.requirements,
                 requirement_coverage = excluded.requirement_coverage,
                 mutation_score = excluded.mutation_score,
+                mutation_timed_out = excluded.mutation_timed_out,
                 findings_json = excluded.findings_json
             """,
             (
@@ -52,6 +54,7 @@ def save_report(database: Path, report: AuditReport) -> None:
                 report.requirements,
                 report.requirement_coverage,
                 report.mutation_score,
+                report.mutation_timed_out,
                 findings,
             ),
         )
@@ -63,7 +66,7 @@ def list_reports(database: Path) -> list[AuditReport]:
         rows = connection.execute(
             """
             SELECT task_id, title, requirements, requirement_coverage,
-                   mutation_score, findings_json
+                   mutation_score, mutation_timed_out, findings_json
             FROM audits
             ORDER BY task_id
             """
@@ -77,7 +80,7 @@ def get_report(database: Path, task_id: str) -> AuditReport | None:
         row = connection.execute(
             """
             SELECT task_id, title, requirements, requirement_coverage,
-                   mutation_score, findings_json
+                   mutation_score, mutation_timed_out, findings_json
             FROM audits
             WHERE task_id = ?
             """,
@@ -94,7 +97,7 @@ def _connect(database: Path) -> Iterator[sqlite3.Connection]:
     connection = sqlite3.connect(database)
     connection.row_factory = sqlite3.Row
     try:
-        connection.execute(_SCHEMA)
+        _ensure_schema(connection)
         yield connection
     except Exception:
         connection.rollback()
@@ -116,5 +119,17 @@ def _report_from_row(row: sqlite3.Row) -> AuditReport:
         requirements=int(row["requirements"]),
         requirement_coverage=float(row["requirement_coverage"]),
         mutation_score=float(row["mutation_score"]),
+        mutation_timed_out=int(row["mutation_timed_out"]),
         findings=findings,
     )
+
+
+def _ensure_schema(connection: sqlite3.Connection) -> None:
+    """Create the table, and add the timeout column to an older database."""
+    connection.execute(_SCHEMA)
+    columns = {str(row[1]) for row in connection.execute("PRAGMA table_info(audits)")}
+    if "mutation_timed_out" not in columns:
+        connection.execute(
+            "ALTER TABLE audits ADD COLUMN mutation_timed_out "
+            "INTEGER NOT NULL DEFAULT 0"
+        )
