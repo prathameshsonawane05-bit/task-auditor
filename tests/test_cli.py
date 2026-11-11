@@ -31,6 +31,7 @@ def test_audit_prints_id_title_count_and_sandbox_warning(
     assert "requirements: 2" in text
     assert "requirement_coverage: 1.000" in text
     assert "mutation_score: 1.000" in text
+    assert "mutation_timed_out: 0" in text
     assert "findings: 0" in text
     assert "this command runs task code" in text
     assert "not a security sandbox" in text
@@ -41,8 +42,10 @@ def test_audit_prints_id_title_count_and_sandbox_warning(
     assert payload["findings"] == []
     assert payload["requirement_coverage"] == 1.0
     assert payload["mutation_score"] == 1.0
+    assert payload["mutation_timed_out"] == 0
     assert "requirement_coverage: 1.000" in markdown
     assert "mutation_score: 1.000" in markdown
+    assert "mutation_timed_out: 0" in markdown
     assert "No findings." in markdown
 
 

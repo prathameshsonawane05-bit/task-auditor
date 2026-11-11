@@ -276,6 +276,7 @@ def test_weak_countdown_leaves_a_survivor_and_kills_a_timeout(
 
     assert (report.killed, report.total, report.excluded) == (4, 5, 0)
     assert report.score == mutation_score(4, 5)
+    assert report.timed_out == 1
     assert len(report.survivors) == 1
     assert "changing constant 1 to 2" in survivor_text
     assert "changing constant 1 to 0" not in survivor_text

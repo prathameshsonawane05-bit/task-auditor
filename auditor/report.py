@@ -27,6 +27,7 @@ class AuditReport(BaseModel):
     requirements: int = Field(ge=0)
     requirement_coverage: float
     mutation_score: float
+    mutation_timed_out: int = Field(default=0, ge=0)
     findings: list[ReportFinding]
 
 
@@ -45,6 +46,7 @@ def report_markdown(report: AuditReport) -> str:
         f"requirements: {report.requirements}",
         f"requirement_coverage: {report.requirement_coverage:.3f}",
         f"mutation_score: {report.mutation_score:.3f}",
+        f"mutation_timed_out: {report.mutation_timed_out}",
         "",
         "## Findings",
         "",

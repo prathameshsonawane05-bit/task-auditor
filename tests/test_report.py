@@ -49,3 +49,19 @@ def test_markdown_says_when_a_task_has_no_findings() -> None:
     assert "No findings." in text
     assert "requirement_coverage: 1.000" in text
     assert "mutation_score: 1.000" in text
+    assert "mutation_timed_out: 0" in text
+
+
+def test_report_json_without_timeout_count_loads_as_zero() -> None:
+    report = AuditReport.model_validate(
+        {
+            "id": "slugify",
+            "title": "Turn a phrase into a URL slug",
+            "requirements": 2,
+            "requirement_coverage": 1.0,
+            "mutation_score": 1.0,
+            "findings": [],
+        }
+    )
+
+    assert report.mutation_timed_out == 0

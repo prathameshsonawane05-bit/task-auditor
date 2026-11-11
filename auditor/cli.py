@@ -47,6 +47,7 @@ def audit(
     typer.echo(f"requirements: {report.requirements}")
     typer.echo(f"requirement_coverage: {report.requirement_coverage:.3f}")
     typer.echo(f"mutation_score: {report.mutation_score:.3f}")
+    typer.echo(f"mutation_timed_out: {report.mutation_timed_out}")
     typer.echo(f"findings: {len(report.findings)}")
     typer.echo(f"json: {json_path}")
     typer.echo(f"markdown: {markdown_path}")

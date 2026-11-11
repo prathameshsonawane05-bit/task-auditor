@@ -54,7 +54,7 @@ Before pytest starts, the child replaces `socket.socket` so the default family, 
 
 Cheats rewrite module-level functions only: return `None`, return `0`, an empty body, and return the first argument. A module with no function skips the cheats. A timeout or an error is not a passing cheat. Flaky runs the suite three times in one temp directory.
 
-Mutation builds mutants with `ast` and runs each one through the same runner. The operator map swaps `==` with `!=`, `<` with `>=`, `<=` with `>`, `>` with `<=`, `>=` with `<`, `is` with `is not`, `in` with `not in`, and `and` with `or`. Numeric constants move by 1, floats by 1.0. `True` and `False` are not mutated. `while` and `for` are not branches. Deleting a branch applies to `if` statements and `if` expressions. A mutant that still passes is a survivor. A timeout counts as killed. When there are more than 48 sites, seed 11 chooses the subset. Sites at or under 48 are all used.
+Mutation builds mutants with `ast` and runs each one through the same runner. The operator map swaps `==` with `!=`, `<` with `>=`, `<=` with `>`, `>` with `<=`, `>=` with `<`, `is` with `is not`, `in` with `not in`, and `and` with `or`. Numeric constants move by 1, floats by 1.0. `True` and `False` are not mutated. `while` and `for` are not branches. Deleting a branch applies to `if` statements and `if` expressions. A mutant that still passes is a survivor. A timeout stays inside killed and is also reported as mutation_timed_out. When there are more than 48 sites, seed 11 chooses the subset. Sites at or under 48 are all used.
 
 ## Precision and recall
 

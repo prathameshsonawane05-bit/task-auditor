@@ -38,7 +38,8 @@ unparses to the original source, or to the same text as unparsing the
 original tree, is dropped and is not counted as excluded.
 
 A mutant is killed when the suite does not pass, including a timeout or an
-error. A mutant survives when the suite passes. The score is killed / total.
+error. A timeout stays inside killed and is also counted on ``timed_out``.
+A mutant survives when the suite passes. The score is killed / total.
 A total of 0 scores 0.0.
 """
 
@@ -114,6 +115,7 @@ class MutationRun:
 
     score: float
     killed: int
+    timed_out: int
     total: int
     excluded: int
     sampled: bool
@@ -167,20 +169,24 @@ def measure_mutations(root: Path) -> MutationRun:
     """Run every selected mutant through the Stage 4 suite runner."""
     solution = _read_solution(root)
     if solution is None:
-        return MutationRun(0.0, 0, 0, 0, False, ())
+        return MutationRun(0.0, 0, 0, 0, 0, False, ())
     mutants, excluded, sampled = build_mutants(solution)
     survivors: list[Finding] = []
     killed = 0
+    timed_out = 0
     for mutant in mutants:
         result = run_suite_source(root, mutant.source)
         if result.passed:
             survivors.append(_survivor(mutant))
         else:
             killed += 1
+            if result.timed_out:
+                timed_out += 1
     total = len(mutants)
     return MutationRun(
         mutation_score(killed, total),
         killed,
+        timed_out,
         total,
         excluded,
         sampled,

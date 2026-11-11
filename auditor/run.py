@@ -32,6 +32,7 @@ def run_audit(task: LoadedTask) -> AuditReport:
         requirements=len(task.requirements),
         requirement_coverage=requirement_coverage(target),
         mutation_score=mutation.score,
+        mutation_timed_out=mutation.timed_out,
         findings=[_report_finding(finding) for finding in findings],
     )
 
