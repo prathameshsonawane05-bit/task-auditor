@@ -2011,3 +2011,56 @@ Decisions and open questions:
 
 Next stage:
 Waiting for "next".
+
+## Improvement 4: mutation timeout count (commit 0e27faf3c48b8bd4b80c95a620d3764af853e213)
+What was built:
+A mutant that times out is still killed. `measure_mutations` also counts those timeouts on `MutationRun.timed_out`. The score stays killed / total. The countdown fixture is still killed 4, total 5, score 4/5, with one survivor described as changing constant 1 to 2. Its timed-out count is 1, and the constant-1-to-0 mutant is not a survivor.
+
+The audit report has `mutation_timed_out`. JSON that omits the field loads with 0. The CLI prints the count, and the Markdown report includes it. The slugify audit is mutation_score 1.0 and mutation_timed_out 0 in both files. `docs/DESIGN.md` says a timeout stays inside killed and is also reported as `mutation_timed_out`. The 512 GiB paragraph was not changed.
+
+Commands run and their real output:
+```
+.venv/bin/ruff check .
+All checks passed!
+
+.venv/bin/ruff format --check .
+318 files already formatted
+
+.venv/bin/mypy
+Success: no issues found in 45 source files
+
+.venv/bin/pytest -q
+........................................................................ [ 62%]
+...........................................                              [100%]
+115 passed in 89.69s (0:01:29)
+
+npm run typecheck && npm run build
+> typecheck
+> tsc --noEmit
+
+> build
+> tsc --noEmit && vite build
+
+vite v6.4.6 building for production...
+transforming...
+✓ 29 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.40 kB │ gzip:  0.27 kB
+dist/assets/index-CqjeQbxl.css    1.52 kB │ gzip:  0.67 kB
+dist/assets/index-CUucqIJ5.js   226.74 kB │ gzip: 70.48 kB
+✓ built in 433ms
+```
+
+Bugs found and fixed:
+None. The countdown timeout was already inside killed. The new field counts it a second time.
+
+Files changed:
+`auditor/checks/mutation.py`, `auditor/run.py`, `auditor/report.py`, `auditor/cli.py`, `tests/test_mutation.py`, `tests/test_cli.py`, `tests/test_report.py`, `docs/DESIGN.md`.
+
+Decisions and open questions:
+- The SQLite store does not have a column for this count. A report read back from the database uses the default 0.
+- The React page was left unchanged. It does not show the new field.
+
+Next stage:
+Waiting for "next".
