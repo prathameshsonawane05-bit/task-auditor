@@ -1,22 +1,24 @@
 """Run reference-solution calls in a child process.
 
 The auditor process writes the solution to a temp file and starts a second
-Python. It does not import or exec that file itself.
+Python. It does not import or exec that file itself. The child uses the
+same wall-clock limit, process-group kill, discarded output, and address
+limit as the pytest runner. This is not a security sandbox.
 """
 
 import json
 import os
-import subprocess
-import sys
 import tempfile
 import textwrap
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
+from auditor.checks.child import address_limit_source, run_limited_child
+
 SUBPROCESS_TIMEOUT_SECONDS = 2.0
 
-DRIVER_SOURCE = textwrap.dedent(
+DRIVER_SOURCE = address_limit_source() + textwrap.dedent(
     """\
     import json
     import sys
@@ -73,24 +75,19 @@ def run_calls(
         calls_path = root / "calls.json"
         results_path = root / "results.json"
         calls_path.write_text(encoded, encoding="utf-8")
-        try:
-            subprocess.run(
-                [
-                    sys.executable,
-                    "-I",
-                    str(root / "driver.py"),
-                    str(root),
-                    func_name,
-                    str(calls_path),
-                    str(results_path),
-                ],
-                cwd=root,
-                env=_child_env(),
-                timeout=SUBPROCESS_TIMEOUT_SECONDS,
-                capture_output=True,
-                check=False,
-            )
-        except subprocess.TimeoutExpired:
+        completed = run_limited_child(
+            [
+                str(root / "driver.py"),
+                str(root),
+                func_name,
+                str(calls_path),
+                str(results_path),
+            ],
+            cwd=root,
+            env=_child_env(),
+            timeout=SUBPROCESS_TIMEOUT_SECONDS,
+        )
+        if completed is None:
             return None
         if not results_path.is_file():
             return None

@@ -21,8 +21,12 @@ sandbox. The block still allows AF_UNIX sockets, local files, a subprocess
 code that restores or reloads ``socket.socket``.
 
 Timeout: each child is limited to ``DYNAMIC_TIMEOUT_SECONDS`` (2 seconds).
-A child that is still running is killed, and the call returns. A correct
-suite that needs longer than that is reported as not passing.
+The child starts in a new session. On timeout the process group is killed
+and the call waits until that child is gone. stdout and stderr are
+discarded. A correct suite that needs longer than that is reported as not
+passing. Before pytest is imported, the driver sets the soft address-space
+limit to ``CHILD_ADDRESS_LIMIT_BYTES``. These limits are not a security
+sandbox.
 
 Cheats rewrite module-level function bodies only. A module with no
 function is not rewritten, and that cheat is not run. The constant is ``0``.
@@ -42,13 +46,13 @@ import json
 import os
 import shutil
 import subprocess
-import sys
 import tempfile
 import textwrap
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
+from auditor.checks.child import address_limit_source, run_limited_child
 from auditor.checks.model import Finding, Severity
 
 DYNAMIC_TIMEOUT_SECONDS = 2.0
@@ -89,8 +93,11 @@ _NETWORK_BLOCK = textwrap.dedent(
     """
 )
 
-_PYTEST_DRIVER = _NETWORK_BLOCK + textwrap.dedent(
-    """\
+_PYTEST_DRIVER = (
+    address_limit_source()
+    + _NETWORK_BLOCK
+    + textwrap.dedent(
+        """\
     import json
     import sys
     from pathlib import Path
@@ -129,10 +136,14 @@ _PYTEST_DRIVER = _NETWORK_BLOCK + textwrap.dedent(
         payload = {"exit_code": None, "tests": record.rows, "error": type(exc).__name__}
     out.write_text(json.dumps(payload), encoding="utf-8")
     """
+    )
 )
 
-_TCP_PROBE = _NETWORK_BLOCK + textwrap.dedent(
-    """\
+_TCP_PROBE = (
+    address_limit_source()
+    + _NETWORK_BLOCK
+    + textwrap.dedent(
+        """\
     import json
     import sys
     from pathlib import Path
@@ -149,6 +160,7 @@ _TCP_PROBE = _NETWORK_BLOCK + textwrap.dedent(
         sock.close()
         out.write_text(json.dumps({"ok": True}), encoding="utf-8")
     """
+    )
 )
 
 
@@ -369,18 +381,12 @@ def _execute(dest: Path) -> SuiteResult:
 
 
 def _run_child(args: list[str], cwd: Path) -> subprocess.CompletedProcess[bytes] | None:
-    try:
-        return subprocess.run(
-            [sys.executable, "-I", *args],
-            cwd=cwd,
-            env=_child_env(),
-            timeout=DYNAMIC_TIMEOUT_SECONDS,
-            capture_output=True,
-            check=False,
-            stdin=subprocess.DEVNULL,
-        )
-    except subprocess.TimeoutExpired:
-        return None
+    return run_limited_child(
+        args,
+        cwd=cwd,
+        env=_child_env(),
+        timeout=DYNAMIC_TIMEOUT_SECONDS,
+    )
 
 
 def _child_env() -> dict[str, str]:
