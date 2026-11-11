@@ -1898,3 +1898,56 @@ Decisions and open questions:
 
 Next stage:
 Waiting for "next".
+
+## Improvement 2: shared flaky directory (commit 56fcc7427e457233d79889417f6aab12d523131b)
+What was built:
+`tests/test_dynamic.py` now checks that `run_flaky_tests` copies the task once and calls the suite three times on that same temp directory. The existing counter-file test still expects `passed, failed, failed`. A fresh directory per run would make that counter pass three times, so the new test fails unless the three paths are the same object. The flaky runner was not changed.
+
+The fresh-checkout install in `README.md` is now `uv sync --frozen --extra dev --python 3.11`. The note that `python3.11 -m venv` fails on the uv interpreter stays. The audit command and the warning sentence stay.
+
+Commands run and their real output:
+```
+.venv/bin/ruff check .
+All checks passed!
+
+.venv/bin/ruff format --check .
+314 files already formatted
+
+.venv/bin/mypy
+Success: no issues found in 41 source files
+
+.venv/bin/pytest -q
+........................................................................ [ 64%]
+........................................                                 [100%]
+112 passed in 68.31s (0:01:08)
+
+npm run typecheck && npm run build
+> typecheck
+> tsc --noEmit
+
+> build
+> tsc --noEmit && vite build
+
+vite v6.4.6 building for production...
+transforming...
+✓ 29 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.40 kB │ gzip:  0.27 kB
+dist/assets/index-CqjeQbxl.css    1.52 kB │ gzip:  0.67 kB
+dist/assets/index-CUucqIJ5.js   226.74 kB │ gzip: 70.48 kB
+✓ built in 454ms
+```
+
+Bugs found and fixed:
+None. The three runs already shared one directory. The new test locks that.
+
+Files changed:
+`tests/test_dynamic.py`, `README.md`.
+
+Decisions and open questions:
+- The regression test spies on `_copy_task` and `_execute`. It requires one copy and three executions of that same path, and it still expects `passed, failed, failed`.
+- Checks 1 to 11, the sample tasks, the held-out tasks, and the evaluation numbers were not changed.
+
+Next stage:
+Waiting for "next".
