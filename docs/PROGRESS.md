@@ -2130,3 +2130,64 @@ Decisions and open questions:
 
 Next stage:
 Waiting for "next".
+
+## Improvement 6: portfolio limits (commit 4ca09ef6b925cff18d8d47921ec4940bea34f053)
+What was built:
+`README.md` has a Limits section. It points at the v1 and Held-out tables in `docs/EVALUATION.md` and restates the recorded scores: v1 is 1.000 and was written by the same author as the checks; held-out `weak_assertion` precision is 0.111; `hardcoded_solution` precision is 0.500; `surviving_mutants` precision is 0.000; `hidden_requirement`, `solution_fails_tests`, `cheat_solution_passes`, and `flaky_tests` are n/a. The same section states the current behavior: the child is not a security sandbox; the address cap is 512 GiB and a 600 MiB allocation still succeeded on this Mac; the three flaky runs share one temp directory; a mutation timeout stays inside the score and is also reported as `mutation_timed_out`; the API has no accounts and accepts only `127.0.0.1` and `::1`; the loader accepts only a direct child of `sample_tasks`; the tasks are synthetic. No new scored set was written, and `docs/EVALUATION.md` was not edited.
+
+Commands run and their real output:
+```
+.venv/bin/ruff check .
+All checks passed!
+
+.venv/bin/ruff format --check .
+318 files already formatted
+
+.venv/bin/mypy
+Success: no issues found in 45 source files
+
+.venv/bin/pytest -q
+........................................................................ [ 59%]
+..................................................                       [100%]
+122 passed in 88.56s (0:01:28)
+
+npm test && npm run typecheck && npm run build
+> test
+> vitest run
+
+ RUN  v5.1.0 /Users/shubhambaviskar/Desktop/Eval Task Auditor/frontend
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  19:36:16
+   Duration  684ms (environment 74%, import 14%, tests 10%, transform 1%)
+
+> typecheck
+> tsc --noEmit
+
+> build
+> tsc --noEmit && vite build
+
+vite v6.4.6 building for production...
+transforming...
+✓ 29 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.40 kB │ gzip:  0.27 kB
+dist/assets/index-CqjeQbxl.css    1.52 kB │ gzip:  0.67 kB
+dist/assets/index-D_ic4bW4.js   226.78 kB │ gzip: 70.49 kB
+✓ built in 437ms
+```
+
+Bugs found and fixed:
+None.
+
+Files changed:
+`README.md`.
+
+Decisions and open questions:
+- The Limits section quotes the existing tables. It does not add a table or a task folder.
+- No check, timeout, address cap, or flaky-directory behavior was changed.
+
+Next stage:
+None. This was the last improvement.
