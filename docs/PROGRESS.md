@@ -1951,3 +1951,63 @@ Decisions and open questions:
 
 Next stage:
 Waiting for "next".
+
+## Improvement 3: child resource limits (commit d80e79fc251cdcd5e3a78795f08d8c8c853a6b72)
+What was built:
+The pytest child and the check-3 call child now share one helper. Each child starts in a new session. On timeout the helper kills that process group and waits until the direct child is gone. stdout and stderr are discarded. The runners still read a result file. `DYNAMIC_TIMEOUT_SECONDS` and `SUBPROCESS_TIMEOUT_SECONDS` stay at 2. The three flaky runs still share one temp directory. A timeout is still not a pass.
+
+Before either driver imports pytest or the task, it sets the soft address-space limit to `CHILD_ADDRESS_LIMIT_BYTES`. That constant is 512 GiB, not 512 MiB. A fresh `python -I` on this Mac already has a virtual size of about 422 GiB (`ps` reported 442249808 KB). `setrlimit(RLIMIT_AS, 512 MiB)` raises `ValueError: current limit exceeds maximum limit` before pytest or the task is imported, and `ulimit -v 524288` fails with `invalid argument`. The lowest cap this interpreter accepted was 452855214596 bytes. 512 GiB is the next power-of-two gibibyte that `setrlimit` accepts, and importing pytest under that cap succeeds. The existing suite did not die at 512 GiB, so the constant stayed there.
+
+`tests/fixtures/sleeping_grandchild.py` starts `sleep 120` and records its pid. The regression test runs that fixture through the call child and the pytest child. Both grandchildren were gone when the calls returned. The test reaps a leftover pid if the kill fails. `tests/fixtures/report_address_limit.py` reports the soft address limit. Both children reported 549755813888, equal to the named constant.
+
+A 600 MiB allocation under the 512 GiB cap succeeded. A 32 MiB allocation after setting the cap to the lowest value this interpreter accepts raised `MemoryError`. The named constant was not lowered.
+
+These limits are not a security sandbox. README and DESIGN still say the network block does not stop AF_UNIX sockets, local files, ctypes, or task code that restores `socket.socket`. The CLI warning sentence is unchanged.
+
+Commands run and their real output:
+```
+.venv/bin/ruff check .
+All checks passed!
+
+.venv/bin/ruff format --check .
+318 files already formatted
+
+.venv/bin/mypy
+Success: no issues found in 45 source files
+
+.venv/bin/pytest -q
+........................................................................ [ 63%]
+..........................................                               [100%]
+114 passed in 90.66s (0:01:30)
+
+npm run typecheck && npm run build
+> typecheck
+> tsc --noEmit
+
+> build
+> tsc --noEmit && vite build
+
+vite v6.4.6 building for production...
+transforming...
+✓ 29 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.40 kB │ gzip:  0.27 kB
+dist/assets/index-CqjeQbxl.css    1.52 kB │ gzip:  0.67 kB
+dist/assets/index-CUucqIJ5.js   226.74 kB │ gzip: 70.48 kB
+✓ built in 423ms
+```
+
+Bugs found and fixed:
+A 512 MiB address cap cannot be installed on this Mac. The fresh interpreter's virtual size is already about 422 GiB, so every child would have died in `setrlimit` before running pytest or the task. The named cap is 512 GiB.
+
+Files changed:
+`auditor/checks/child.py`, `auditor/checks/dynamic.py`, `auditor/checks/sandbox.py`, `tests/fixtures/sleeping_grandchild.py`, `tests/fixtures/report_address_limit.py`, `tests/test_child_limits.py`, `README.md`, `docs/DESIGN.md`.
+
+Decisions and open questions:
+- One helper, `run_limited_child`, serves both runners. The address-limit preamble is prepended to both drivers and to the TCP probe.
+- On this Mac `RLIMIT_AS` is the same constant as `RLIMIT_RSS` (5). The soft limit still reads back as the value that was set.
+- An allocation larger than 512 GiB was not attempted. A 32 MiB allocation past the lowest cap the kernel accepted did raise `MemoryError`.
+
+Next stage:
+Waiting for "next".
