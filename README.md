@@ -80,3 +80,13 @@ Also assert that the name and severity are in the registry the check joined. The
 - The held-out table was not tuned. `weak_assertion` precision is 0.111 because a test whose only check is `pytest.raises` counts as no assert. `hardcoded_solution` flagged `hall_postage`, a real postage table that returns literal band prices. `surviving_mutants` flagged `stall_call` because `price_pence < 0` can become `price_pence < -1` and the refusal test still passes. Rows printed `n/a` were not measured.
 
 Both tables are in [docs/EVALUATION.md](docs/EVALUATION.md). The design of the folders, registries, runner, and scores is in [docs/DESIGN.md](docs/DESIGN.md).
+
+## Limits
+
+The scored runs are the v1 and Held-out tables in [docs/EVALUATION.md](docs/EVALUATION.md). Those tables are the record.
+
+v1 is 1.000 on every check. That set was written by the same author as the checks, so the perfect score is weak evidence.
+
+On the held-out tasks, `weak_assertion` precision is 0.111, `hardcoded_solution` precision is 0.500, and `surviving_mutants` precision is 0.000. `hidden_requirement`, `solution_fails_tests`, `cheat_solution_passes`, and `flaky_tests` are n/a, because each of those rows had no labeled cases and no reported findings.
+
+The child that runs task code is not a security sandbox. Its soft address cap is 512 GiB, and a 600 MiB allocation still succeeded under that cap on this Mac. The three flaky runs share one temp directory. A mutation timeout stays inside the score, killed divided by total, and the report also gives that count as `mutation_timed_out`. The API has no accounts and accepts only `127.0.0.1` and `::1`. The loader accepts only a task folder that is a direct child of `sample_tasks`. The tasks are synthetic.
