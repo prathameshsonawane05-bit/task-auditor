@@ -6,9 +6,11 @@ from pathlib import Path
 
 import pytest
 
+import auditor.checks.dynamic as dynamic
 from auditor.checks.dynamic import (
     DYNAMIC_CHECKS,
     DYNAMIC_TIMEOUT_SECONDS,
+    SuiteResult,
     probe_tcp,
     run_cheat_solution_passes,
     run_dynamic_checks,
@@ -155,6 +157,42 @@ def test_counter_file_forces_a_flaky_result(tmp_path: Path) -> None:
     assert findings[0].severity == Severity.LOW
     assert "passed, failed, failed" in findings[0].explanation
     assert_one_sentence(findings[0].explanation)
+
+
+def test_flaky_runs_share_one_temp_directory(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root = tmp_path / "shared"
+    _write_task(
+        root,
+        solution=_ECHO_SOLUTION,
+        tests=_FLAKY_TEST,
+        test_name="test_flaky.py",
+    )
+    copies: list[Path] = []
+    runs: list[Path] = []
+    real_copy = dynamic._copy_task
+    real_execute = dynamic._execute
+
+    def spy_copy(src: Path, dest: Path, solution_text: str | None) -> bool:
+        copies.append(dest)
+        return real_copy(src, dest, solution_text)
+
+    def spy_execute(dest: Path) -> SuiteResult:
+        runs.append(dest)
+        return real_execute(dest)
+
+    monkeypatch.setattr(dynamic, "_copy_task", spy_copy)
+    monkeypatch.setattr(dynamic, "_execute", spy_execute)
+
+    findings = run_flaky_tests(root)
+
+    assert len(copies) == 1
+    assert len(runs) == 3
+    assert runs[0] == runs[1] == runs[2] == copies[0]
+    assert len(findings) == 1
+    assert "passed, failed, failed" in findings[0].explanation
 
 
 def test_hanging_child_returns_within_the_timeout(

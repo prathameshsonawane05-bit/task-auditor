@@ -9,8 +9,7 @@ The tasks in this repository are synthetic. They are not taken from a company, a
 Python 3.11 and [uv](https://docs.astral.sh/uv/) are required. `python3.11 -m venv` fails for the uv-installed interpreter: the new environment looks for the standard library under `/install` and `ensurepip` exits before pip exists.
 
 ```sh
-uv venv --python 3.11 .venv
-uv pip install --python .venv/bin/python -e ".[dev]"
+uv sync --frozen --extra dev --python 3.11
 .venv/bin/auditor audit sample_tasks/slugify --out reports
 ```
 
